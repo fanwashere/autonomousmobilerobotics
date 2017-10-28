@@ -25,9 +25,9 @@ void PoseHandler::callbackSim(const gazebo_msgs::ModelStates::ConstPtr& msg)
 
 void PoseHandler::callbackLive(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
 {
-	pose.x = msg->pose.pose.position.x;
-	pose.y = msg->pose.pose.position.y;
-	pose.yaw = tf::getYaw(msg->pose.pose.orientation);
+    pose.x = msg->pose.pose.position.x;
+    pose.y = msg->pose.pose.position.y;
+    pose.yaw = tf::getYaw(msg->pose.pose.orientation);
 }
 
 Odometry OdometryHandler::getOdometry() const
@@ -43,7 +43,7 @@ void OdometryHandler::callback(const nav_msgs::Odometry::ConstPtr& msg)
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "state_estimation");
+    ros::init(argc, argv, "state_estimation");
     ros::NodeHandle n;
 
     PoseHandler poseHandler;
@@ -62,20 +62,20 @@ int main(int argc, char **argv)
     ros::Subscriber odomSubscriber = n.subscribe("/odom", 1, odomCallback);
     ROS_INFO("Subscribed to /odom topic");
 
-	ros::Rate rate(1);
+    ros::Rate rate(1);
 
-	while(ros::ok())
-	{
+    while(ros::ok())
+    {
         const Odometry odom = odomHandler.getOdometry();
         const Pose pose = poseHandler.getPose();
 
         ROS_INFO("Position-> x: [%f], y: [%f], z: [%f]", odom.pose.pose.position.x,odom.pose.pose.position.y, odom.pose.pose.position.z);
         ROS_INFO("Orientation-> x: [%f], y: [%f], z: [%f], w: [%f]", odom.pose.pose.orientation.x, odom.pose.pose.orientation.y, odom.pose.pose.orientation.z, odom.pose.pose.orientation.w);
         ROS_INFO("Vel-> Linear: [%f], Angular: [%f]", odom.twist.twist.linear.x,odom.twist.twist.angular.z);
-      
-		ros::spinOnce();
-		rate.sleep();
-	}
+
+        ros::spinOnce();
+        rate.sleep();
+    }
 
 	return 0;
 }
