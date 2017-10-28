@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   tf
+  nav_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -113,10 +114,16 @@ include_directories(
 # add_dependencies(turtlebot_example_node turtlebot_example_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(turtlebot_example_node
+ target_link_libraries(
+   turtlebot_example_node
    ${catkin_LIBRARIES}
  )
 
+ add_executable(state_estimation_node src/state_estimation.cpp)
+ target_link_libraries(
+  state_estimation_node
+  ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############
