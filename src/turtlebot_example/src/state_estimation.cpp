@@ -13,7 +13,7 @@ Pose PoseHandler::getPose() const
     return pose;
 }
 
-void PoseHandler::callbackSim(const gazebo_msgs::ModelStates::ConstPtr& msg)
+void PoseHandler::callbackSim(const gazebo_msgs::ModelStates::ConstPtr msg)
 {
     int i;
     for(i = 0; i < msg->name.size(); i++) if(msg->name[i] == "mobile_base") break;
@@ -23,7 +23,7 @@ void PoseHandler::callbackSim(const gazebo_msgs::ModelStates::ConstPtr& msg)
     pose.yaw = tf::getYaw(msg->pose[i].orientation);
 }
 
-void PoseHandler::callbackLive(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
+void PoseHandler::callbackLive(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr msg)
 {
     pose.x = msg->pose.pose.position.x;
     pose.y = msg->pose.pose.position.y;
@@ -35,7 +35,7 @@ Odometry OdometryHandler::getOdometry() const
     return odometry;
 }
 
-void OdometryHandler::callback(const nav_msgs::Odometry::ConstPtr& msg)
+void OdometryHandler::callback(const nav_msgs::Odometry::ConstPtr msg)
 {
     odometry.pose = msg->pose;
     odometry.twist = msg->twist;
@@ -77,5 +77,5 @@ int main(int argc, char **argv)
         rate.sleep();
     }
 
-	return 0;
+    return 0;
 }

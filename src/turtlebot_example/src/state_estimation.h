@@ -17,8 +17,8 @@ class PoseHandler
 {
 public:
     Pose getPose() const;
-    void callbackSim(const gazebo_msgs::ModelStates::ConstPtr& msg);
-    void callbackLive(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg);
+    void callbackSim(const gazebo_msgs::ModelStates::ConstPtr msg);
+    void callbackLive(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr msg);
 
 private:
     Pose pose;
@@ -34,7 +34,7 @@ class OdometryHandler
 {
 public:
     Odometry getOdometry() const;
-    void callback(const nav_msgs::Odometry::ConstPtr&);
+    void callback(const nav_msgs::Odometry::ConstPtr msg);
 
 private:
     Odometry odometry;
