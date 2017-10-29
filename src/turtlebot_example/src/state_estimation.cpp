@@ -1,12 +1,17 @@
 #include "state_estimation.h"
 
-#include <ros/ros.h>
 #include <boost/bind.hpp>
 #include <tf/transform_datatypes.h>
+#include <visualization_msgs/Marker.h>
 
-typedef const boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)> PoseSimCallback;
-typedef const boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)> PoseLiveCallback;
-typedef const boost::function<void(const nav_msgs::Odometry::ConstPtr&)> OdometryCallback;
+namespace
+{
+    const double RATE = 1.0;
+
+    using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
+    using PoseLiveCallback = boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)>;
+    using OdometryCallback = boost::function<void(const nav_msgs::Odometry::ConstPtr&)>;
+}
 
 Pose PoseHandler::getPose() const
 {
@@ -37,23 +42,67 @@ Odometry OdometryHandler::getOdometry() const
 
 void OdometryHandler::callback(const nav_msgs::Odometry::ConstPtr& msg)
 {
-    odometry.pose = msg->pose;
+    odometry.pose.x = msg->pose.pose.position.x;
+    odometry.pose.y = msg->pose.pose.position.y;
+    odometry.pose.yaw = tf::getYaw(msg->pose.pose.orientation);
+
     odometry.twist = msg->twist;
+}
+
+ParticleFilter::ParticleFilter(uint32_t numParticles)
+    : numParticles(numParticles)
+    , weights(numParticles)
+    , particles(numParticles)
+    , time(ros::Time::now())
+{}
+
+void ParticleFilter::run(const Pose& newPose)
+{
+    ros::Time currentTime = ros::Time::now();
+
+    double dt = (currentTime - time).toSec();
+
+    for (int i = 0; i < numParticles; i++)
+    {
+
+    }
+}
+
+void publishParticles(const ros::Publisher& publisher, const Pose& pose)
+{
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "/particle_frame";
+    marker.header.stamp = ros::Time::now();
+    marker.ns = "particle_filter";
+    marker.id = 0;
+    marker.type = visualization_msgs::Marker::POINTS;
+    marker.scale.x = 0.2;
+    marker.scale.y = 0.2;
+    marker.color.g = 1.0f;
+
+    geometry_msgs::Point point;
+    point.x = pose.x;
+    point.y = pose.y;
+
+    marker.points.push_back(point);
+
+    publisher.publish(marker);
 }
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "state_estimation");
     ros::NodeHandle n;
+    ros::Rate rate(RATE);
 
     PoseHandler poseHandler;
 #ifdef LIVE
     PoseLiveCallback poseLiveCallback = boost::bind(&PoseHandler::callbackLive, &poseHandler, _1);
-    ros::Subscriber poseLiveSubscriber = n.subscribe("/indoor_pos", 1, poseLiveCallback);
+    auto poseLiveSubscriber = n.subscribe("/indoor_pos", 1, poseLiveCallback);
     ROS_INFO("Subscribed to /indoor_pos topic");
 #else
     PoseSimCallback poseSimCallback = boost::bind(&PoseHandler::callbackSim, &poseHandler, _1);
-    ros::Subscriber poseSimSubscriber = n.subscribe("/gazebo/model_states", 1, poseSimCallback);
+    auto poseSimSubscriber = n.subscribe("/gazebo/model_states", 1, poseSimCallback);
     ROS_INFO("Subscribed to /gazebo/model_states topic");
 #endif
 
@@ -62,20 +111,18 @@ int main(int argc, char **argv)
     ros::Subscriber odomSubscriber = n.subscribe("/odom", 1, odomCallback);
     ROS_INFO("Subscribed to /odom topic");
 
-    ros::Rate rate(1);
+    ros::Publisher particlePublisher = n.advertise<visualization_msgs::Marker>("/particle_filter", 1);
 
     while(ros::ok())
     {
-        const Odometry odom = odomHandler.getOdometry();
-        const Pose pose = poseHandler.getPose();
+        const auto odom = odomHandler.getOdometry();
+        const auto pose = poseHandler.getPose();
 
-        ROS_INFO("Position-> x: [%f], y: [%f], z: [%f]", odom.pose.pose.position.x,odom.pose.pose.position.y, odom.pose.pose.position.z);
-        ROS_INFO("Orientation-> x: [%f], y: [%f], z: [%f], w: [%f]", odom.pose.pose.orientation.x, odom.pose.pose.orientation.y, odom.pose.pose.orientation.z, odom.pose.pose.orientation.w);
-        ROS_INFO("Vel-> Linear: [%f], Angular: [%f]", odom.twist.twist.linear.x,odom.twist.twist.angular.z);
+        publishParticles(particlePublisher, pose);
 
         ros::spinOnce();
         rate.sleep();
     }
 
-	return 0;
+    return 0;
 }
