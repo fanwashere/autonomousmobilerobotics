@@ -14,11 +14,9 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   nav_msgs
   tf
-  cmake_modules
 )
 
 find_package(Boost REQUIRED)
-find_package(Eigen REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -114,7 +112,6 @@ catkin_package(
 #  LIBRARIES mapper
 #  CATKIN_DEPENDS gazebo_msgs roscpp sensor_msgs std_msgs
 #  DEPENDS system_lib
-DEPENDS Eigen
 )
 
 ###########
@@ -127,7 +124,6 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
-  ${Eigen_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -144,7 +140,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node src/mapper_node.cpp)
-target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${Eigen_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
