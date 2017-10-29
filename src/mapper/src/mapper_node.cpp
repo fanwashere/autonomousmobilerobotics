@@ -2,6 +2,7 @@
 #include "gazebo_msgs/ModelStates.h"
 #include "sensor_msgs/LaserScan.h"
 #include "nav_msgs/OccupancyGrid.h"
+#include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include <math.h>
 #include <boost/bind.hpp>
 #include <tf/transform_datatypes.h>
@@ -13,8 +14,8 @@
 
 #define sign(x) ((x > 0) ? 1 : ((x < 0) ? -1 : 0))
 
-typedef const boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)> poseCallback;
-typedef const boost::function<void(const sensor_msgs::LaserScan::ConstPtr&)> rangeCallback;
+typedef const boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)> PoseCallback;
+typedef const boost::function<void(const sensor_msgs::LaserScan::ConstPtr&)> RangeCallback;
 
 /* Position Helper Code */
 
@@ -25,17 +26,18 @@ class Pose {
   float theta;
 };
 
-class poseHandler {
+class PoseHandler {
  private:
   float x;
   float y;
   float theta;
  public:
   void callback(const gazebo_msgs::ModelStates::ConstPtr&);
+  void callbackLive(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&);
   Pose getPose();
 };
 
-void poseHandler::callback(const gazebo_msgs::ModelStates::ConstPtr& msg) {
+void PoseHandler::callback(const gazebo_msgs::ModelStates::ConstPtr& msg) {
   this->x = msg->pose[1].position.x;
   this->y = msg->pose[1].position.y;
 
@@ -47,7 +49,14 @@ void poseHandler::callback(const gazebo_msgs::ModelStates::ConstPtr& msg) {
   this->theta = (float)yaw;
 }
 
-Pose poseHandler::getPose() {
+void PoseHandler::callbackLive(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
+{
+  this->x = msg->pose.pose.position.x;
+  this->y = msg->pose.pose.position.y;
+  this->theta = tf::getYaw(msg->pose.pose.orientation);
+}
+
+Pose PoseHandler::getPose() {
   Pose pose;
   pose.x = this->x;
   pose.y = this->y;
@@ -64,7 +73,7 @@ class Scan {
   float range;
 };
 
-class rangeHandler {
+class RangeHandler {
  private:
   std::vector<Scan> ranges;
  public:
@@ -72,7 +81,7 @@ class rangeHandler {
   std::vector<Scan> getRanges();
 };
 
-void rangeHandler::callback(const sensor_msgs::LaserScan::ConstPtr& msg) {
+void RangeHandler::callback(const sensor_msgs::LaserScan::ConstPtr& msg) {
   int i, numMeasurements = msg->ranges.size();
   float currentAngle = msg->angle_min;
   std::vector<Scan> ranges;
@@ -94,7 +103,7 @@ void rangeHandler::callback(const sensor_msgs::LaserScan::ConstPtr& msg) {
   this->ranges = ranges;
 }
 
-std::vector<Scan> rangeHandler::getRanges() {
+std::vector<Scan> RangeHandler::getRanges() {
   return this->ranges;
 }
 
@@ -206,15 +215,20 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "mapper_node");
   ros::NodeHandle n;
 
-  poseHandler posHandler;
-  poseCallback poseSubscriberCallback = boost::bind(&poseHandler::callback, &posHandler, _1);
+  PoseHandler poseHandler;
+  RangeHandler rangeHandler;
 
-  rangeHandler rngHandler;
-  rangeCallback rangeSubscriberCallback = boost::bind(&rangeHandler::callback, &rngHandler, _1);
-
+#ifdef LIVE
+  PoseCallback poseSubscriberCallbackLive = boost::bind(&PoseHandler::callbackLive, &poseHandler, _1);
+  ros::Subscriber poseSubscriber = n.subscribe("/indoor_pos", 1, poseSubscriberCallbackLive);
+  ROS_INFO("Subscribed to /indoor_pos topic.");
+#else
+  PoseCallback poseSubscriberCallback = boost::bind(&PoseHandler::callback, &poseHandler, _1);
   ros::Subscriber poseSubscriber = n.subscribe("/gazebo/model_states", 1, poseSubscriberCallback);
   ROS_INFO("Subscribed to /gazebo/model_states topic.");
+#endif
 
+  RangeCallback rangeSubscriberCallback = boost::bind(&RangeHandler::callback, &rangeHandler, _1);
   ros::Subscriber rangeSubscriber = n.subscribe("/scan", 1, rangeSubscriberCallback);
   ROS_INFO("Subscribed to /scan topic.");
 
@@ -233,8 +247,8 @@ int main(int argc, char **argv)
   msg.data = grid.getVector();
 
   while(ros::ok()) {
-    const Pose pose = posHandler.getPose();
-    const std::vector<Scan> ranges = rngHandler.getRanges();
+    const Pose pose = poseHandler.getPose();
+    const std::vector<Scan> ranges = rangeHandler.getRanges();
 
     const int gridX = (pose.x / GRID_RESOLUTION) + (GRID_WIDTH / 2);
     const int gridY = (pose.y / GRID_RESOLUTION) + (GRID_HEIGHT / 2);
@@ -271,6 +285,5 @@ int main(int argc, char **argv)
     loop_rate.sleep();
   }
 
-  ros::spin();
   return 0;
 }
