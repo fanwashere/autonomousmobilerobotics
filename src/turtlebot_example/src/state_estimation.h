@@ -55,10 +55,10 @@ public:
     explicit ParticleFilter(uint32_t numParticles);
     virtual ~ParticleFilter() = default;
 
-    void run(const Pose& newPose);
+    void run(const Pose& ips, const Odometry& wheel);
 
 private:
-    ros::Time time;
+    ros::Time prevTime;
     uint32_t numParticles;
     std::vector<double> weights;
     std::vector<Pose> particles;

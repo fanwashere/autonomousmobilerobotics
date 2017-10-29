@@ -8,6 +8,16 @@ namespace
 {
     const double RATE = 1.0;
 
+    constexpr double squared(double x)
+    {
+        return x*x;
+    }
+
+    constexpr double normpdf(double x, double u, double s) 
+    { 
+        return (1.0/(s*sqrt(2.0*M_PI)))*exp(-0.5*squared(x-u)/squared(s));
+    }
+
     using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
     using PoseLiveCallback = boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)>;
     using OdometryCallback = boost::function<void(const nav_msgs::Odometry::ConstPtr&)>;
@@ -53,19 +63,29 @@ ParticleFilter::ParticleFilter(uint32_t numParticles)
     : numParticles(numParticles)
     , weights(numParticles)
     , particles(numParticles)
-    , time(ros::Time::now())
+    , predictions(numParticles)
+    , prevTime(ros::Time::now())
 {}
 
-void ParticleFilter::run(const Pose& newPose)
+void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
 {
     ros::Time currentTime = ros::Time::now();
 
-    double dt = (currentTime - time).toSec();
+    double dt = (currentTime - prevTime).toSec();
 
+    // Prediction update
     for (int i = 0; i < numParticles; i++)
     {
-
+        predictions[i].x = particles[i].x + wheel.twist.twist.linear.x * dt;
+        predictions[i].y = particles[i].x + wheel.twist.twist.linear.y * dt;
+        predictions[i].yaw = particles[i].yaw + wheel.twist.twist.angular.z * dt;
     }
+
+    // Update weights
+
+    // Measurement update
+
+    prevTime = currentTime;
 }
 
 void publishParticles(const ros::Publisher& publisher, const Pose& pose)
@@ -108,7 +128,7 @@ int main(int argc, char **argv)
 
     OdometryHandler odomHandler;
     OdometryCallback odomCallback = boost::bind(&OdometryHandler::callback, &odomHandler, _1);
-    ros::Subscriber odomSubscriber = n.subscribe("/odom", 1, odomCallback);
+    auto odomSubscriber = n.subscribe("/odom", 1, odomCallback);
     ROS_INFO("Subscribed to /odom topic");
 
     ros::Publisher particlePublisher = n.advertise<visualization_msgs::Marker>("/particle_filter", 1);
