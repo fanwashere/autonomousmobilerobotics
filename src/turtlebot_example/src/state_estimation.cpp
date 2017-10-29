@@ -3,10 +3,16 @@
 #include <ros/ros.h>
 #include <boost/bind.hpp>
 #include <tf/transform_datatypes.h>
+#include <visualization_msgs/Marker.h>
 
-typedef const boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)> PoseSimCallback;
-typedef const boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)> PoseLiveCallback;
-typedef const boost::function<void(const nav_msgs::Odometry::ConstPtr&)> OdometryCallback;
+namespace
+{
+    const double RATE = 1.0;
+
+    typedef boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)> PoseSimCallback;
+    typedef boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)> PoseLiveCallback;
+    typedef boost::function<void(const nav_msgs::Odometry::ConstPtr&)> OdometryCallback;
+}
 
 Pose PoseHandler::getPose() const
 {
@@ -41,10 +47,32 @@ void OdometryHandler::callback(const nav_msgs::Odometry::ConstPtr msg)
     odometry.twist = msg->twist;
 }
 
+void publishParticles(const ros::Publisher& publisher, const Pose& pose)
+{
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "/particle_frame";
+    marker.header.stamp = ros::Time::now();
+    marker.ns = "particle_filter";
+    marker.id = 0;
+    marker.type = visualization_msgs::Marker::POINTS;
+    marker.scale.x = 0.2;
+    marker.scale.y = 0.2;
+    marker.color.g = 1.0f;
+
+    geometry_msgs::Point point;
+    point.x = pose.x;
+    point.y = pose.y;
+
+    marker.points.push_back(point);
+
+    publisher.publish(marker);
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "state_estimation");
     ros::NodeHandle n;
+    ros::Rate rate(RATE);
 
     PoseHandler poseHandler;
 #ifdef LIVE
@@ -62,16 +90,14 @@ int main(int argc, char **argv)
     ros::Subscriber odomSubscriber = n.subscribe("/odom", 1, odomCallback);
     ROS_INFO("Subscribed to /odom topic");
 
-    ros::Rate rate(1);
+    ros::Publisher particlePublisher = n.advertise<visualization_msgs::Marker>("/particle_filter", 1);
 
     while(ros::ok())
     {
         const Odometry odom = odomHandler.getOdometry();
         const Pose pose = poseHandler.getPose();
 
-        ROS_INFO("Position-> x: [%f], y: [%f], z: [%f]", odom.pose.pose.position.x,odom.pose.pose.position.y, odom.pose.pose.position.z);
-        ROS_INFO("Orientation-> x: [%f], y: [%f], z: [%f], w: [%f]", odom.pose.pose.orientation.x, odom.pose.pose.orientation.y, odom.pose.pose.orientation.z, odom.pose.pose.orientation.w);
-        ROS_INFO("Vel-> Linear: [%f], Angular: [%f]", odom.twist.twist.linear.x,odom.twist.twist.angular.z);
+        publishParticles(particlePublisher, pose);
 
         ros::spinOnce();
         rate.sleep();
