@@ -9,9 +9,9 @@ namespace
 {
     const double RATE = 1.0;
 
-    typedef boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)> PoseSimCallback;
-    typedef boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)> PoseLiveCallback;
-    typedef boost::function<void(const nav_msgs::Odometry::ConstPtr&)> OdometryCallback;
+    typedef boost::function<void(const gazebo_msgs::ModelStates::ConstPtr)> PoseSimCallback;
+    typedef boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr)> PoseLiveCallback;
+    typedef boost::function<void(const nav_msgs::Odometry::ConstPtr)> OdometryCallback;
 }
 
 Pose PoseHandler::getPose() const
