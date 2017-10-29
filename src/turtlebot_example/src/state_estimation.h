@@ -1,6 +1,7 @@
 #pragma once
 
 #include <gazebo_msgs/ModelStates.h>
+#include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TwistWithCovariance.h>
@@ -17,8 +18,8 @@ class PoseHandler
 {
 public:
     Pose getPose() const;
-    void callbackSim(const gazebo_msgs::ModelStates::ConstPtr msg);
-    void callbackLive(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr msg);
+    void callbackSim(const gazebo_msgs::ModelStates::ConstPtr& msg);
+    void callbackLive(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg);
 
 private:
     Pose pose;
@@ -34,8 +35,19 @@ class OdometryHandler
 {
 public:
     Odometry getOdometry() const;
-    void callback(const nav_msgs::Odometry::ConstPtr msg);
+    void callback(const nav_msgs::Odometry::ConstPtr& msg);
 
 private:
     Odometry odometry;
+};
+
+class ParticleFilter
+{
+public:
+    explicit ParticleFilter(int numParticles);
+    void update(const Pose& newPose);
+
+private:
+    std::vector<double> weights;
+    std::vector<geometry_msgs::Point> particles;
 };
