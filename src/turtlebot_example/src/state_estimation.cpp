@@ -42,7 +42,10 @@ Odometry OdometryHandler::getOdometry() const
 
 void OdometryHandler::callback(const nav_msgs::Odometry::ConstPtr& msg)
 {
-    odometry.pose = msg->pose;
+    odometry.pose.x = msg->pose.pose.position.x;
+    odometry.pose.y = msg->pose.pose.position.y;
+    odometry.pose.yaw = tf::getYaw(msg->pose.pose.orientation);
+
     odometry.twist = msg->twist;
 }
 

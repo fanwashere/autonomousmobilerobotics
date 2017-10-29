@@ -31,7 +31,7 @@ private:
 
 struct Odometry
 {
-    geometry_msgs::PoseWithCovariance pose;
+    Pose pose;
     geometry_msgs::TwistWithCovariance twist;
 };
 
