@@ -1,6 +1,5 @@
 #include "state_estimation.h"
 
-#include <ros/ros.h>
 #include <boost/bind.hpp>
 #include <tf/transform_datatypes.h>
 #include <visualization_msgs/Marker.h>
@@ -9,9 +8,9 @@ namespace
 {
     const double RATE = 1.0;
 
-    typedef boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)> PoseSimCallback;
-    typedef boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)> PoseLiveCallback;
-    typedef boost::function<void(const nav_msgs::Odometry::ConstPtr&)> OdometryCallback;
+    using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
+    using PoseLiveCallback = boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)>;
+    using OdometryCallback = boost::function<void(const nav_msgs::Odometry::ConstPtr&)>;
 }
 
 Pose PoseHandler::getPose() const
@@ -47,10 +46,24 @@ void OdometryHandler::callback(const nav_msgs::Odometry::ConstPtr& msg)
     odometry.twist = msg->twist;
 }
 
-ParticleFilter::ParticleFilter(int numParticles)
-    : weights(numParticles)
+ParticleFilter::ParticleFilter(uint32_t numParticles)
+    : numParticles(numParticles)
+    , weights(numParticles)
     , particles(numParticles)
+    , time(ros::Time::now())
 {}
+
+void ParticleFilter::run(const Pose& newPose)
+{
+    ros::Time currentTime = ros::Time::now();
+
+    double dt = (currentTime - time).toSec();
+
+    for (int i = 0; i < numParticles; i++)
+    {
+
+    }
+}
 
 void publishParticles(const ros::Publisher& publisher, const Pose& pose)
 {
@@ -82,11 +95,11 @@ int main(int argc, char **argv)
     PoseHandler poseHandler;
 #ifdef LIVE
     PoseLiveCallback poseLiveCallback = boost::bind(&PoseHandler::callbackLive, &poseHandler, _1);
-    ros::Subscriber poseLiveSubscriber = n.subscribe("/indoor_pos", 1, poseLiveCallback);
+    auto poseLiveSubscriber = n.subscribe("/indoor_pos", 1, poseLiveCallback);
     ROS_INFO("Subscribed to /indoor_pos topic");
 #else
     PoseSimCallback poseSimCallback = boost::bind(&PoseHandler::callbackSim, &poseHandler, _1);
-    ros::Subscriber poseSimSubscriber = n.subscribe("/gazebo/model_states", 1, poseSimCallback);
+    auto poseSimSubscriber = n.subscribe("/gazebo/model_states", 1, poseSimCallback);
     ROS_INFO("Subscribed to /gazebo/model_states topic");
 #endif
 
@@ -99,8 +112,8 @@ int main(int argc, char **argv)
 
     while(ros::ok())
     {
-        const Odometry odom = odomHandler.getOdometry();
-        const Pose pose = poseHandler.getPose();
+        const auto odom = odomHandler.getOdometry();
+        const auto pose = poseHandler.getPose();
 
         publishParticles(particlePublisher, pose);
 
