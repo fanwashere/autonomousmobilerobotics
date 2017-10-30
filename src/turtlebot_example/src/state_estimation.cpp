@@ -8,7 +8,8 @@
 namespace
 {
     const double RATE = 1.0;
-
+    const uint32_t NUMPARTICLES = 10;
+    
     constexpr double squared(double x)
     {
         return x*x;
@@ -53,13 +54,17 @@ Odometry OdometryHandler::getOdometry() const
 
 void OdometryHandler::callback(const nav_msgs::Odometry::ConstPtr& msg)
 {
-    // Pose contains all the position information
+    // Pose containds all the position information
     odometry.pose.x = msg->pose.pose.position.x;
     odometry.pose.y = msg->pose.pose.position.y;
     odometry.pose.yaw = tf::getYaw(msg->pose.pose.orientation);
 
     // Twist contains all the velocity information
     odometry.twist = msg->twist;
+
+    // Get Variance with respect to X and Y
+    odometry.pose.varx = (msg->pose.covariance)[0];
+    odometry.pose.vary = (msg->pose.covariance)[6];
 }
 
 ParticleFilter::ParticleFilter(uint32_t numParticles)
@@ -86,13 +91,15 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
     // Prediction update
     for (int i = 0; i < numParticles; i++)
     {
-        // Use the motion model to calculate predictions
-        predictions[i].x = particles[i].x + wheel.twist.twist.linear.x * dt; // Check for trig
-        predictions[i].y = particles[i].y + wheel.twist.twist.linear.y * dt;
+        // Use the motion model to calculate predictions\
+        // Check if wheel is in global or not
+
+        predictions[i].x = particles[i].x + wheel.pose.varx + wheel.twist.twist.linear.x * dt;
+        predictions[i].y = particles[i].y + wheel.pose.vary + wheel.twist.twist.linear.y * dt;
         predictions[i].yaw = particles[i].yaw + wheel.twist.twist.angular.z * dt;
 
         // Update weights
-        weights[i] = normpdf(ips.x, predictions[i].x, Q) + normpdf(ips.y, predictions[i].y, Q) + normpdf(ips.yaw, predictions[i].yaw, Q);
+        weights[i] = normpdf(ips.x, predictions[i].x, Q) * normpdf(ips.y, predictions[i].y, Q);
         cumsum_weight += weights[i];
         weights[i] = cumsum_weight;
     }
@@ -107,6 +114,9 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
                 particles[i].x = predictions[j].x;
                 particles[i].y = predictions[j].y;
                 particles[i].yaw = predictions[j].yaw;
+
+                ROS_INFO("IPS_X : %f - IPS_Y : %f", ips.x, ips.y);
+                ROS_INFO("PRT_X : %f - PRT_Y : %f", particles[i].x, particles[i].y);
 
                 break;
             }
@@ -161,11 +171,14 @@ int main(int argc, char **argv)
 
     ros::Publisher particlePublisher = n.advertise<visualization_msgs::Marker>("/particle_filter", 1);
 
+    ParticleFilter particleFilter(NUMPARTICLES);
+    
     while(ros::ok())
     {
         const auto odom = odomHandler.getOdometry();
         const auto pose = poseHandler.getPose();
-
+        // const Pose& ips, const Odometry& wheel
+        particleFilter.run(pose, odom);
         publishParticles(particlePublisher, pose);
 
         ros::spinOnce();

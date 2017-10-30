@@ -82,3 +82,6 @@ qtcreator-*
 CATKIN_IGNORE
 .catkin_workspace
 src/CMakeLists.txt
+
+# VS CODE
+src/.vscode

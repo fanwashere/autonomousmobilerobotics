@@ -13,6 +13,9 @@ struct Pose
     double x;
     double y;
     double yaw;
+
+    double varx;
+    double vary;
 };
 
 class PoseHandler
