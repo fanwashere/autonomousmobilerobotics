@@ -11,10 +11,14 @@
 #define GRID_RESOLUTION 0.1 // m/cell
 #define GRID_WIDTH 100 // # of cells
 #define GRID_HEIGHT 100 // # of cells
+#define GRID_DEFAULT_PROBABILITY 0.5 // Grid probability at initialization
+#define P_NO_OBJECT 0.4 // Probability assigned if no hit in the cell
+#define P_HIT_OBJECT 0.6 // Probability assigned if hit something in the cell
 
 #define sign(x) ((x > 0) ? 1 : ((x < 0) ? -1 : 0))
 
 typedef const boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)> PoseCallback;
+typedef const boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)> PoseCallbackLive;
 typedef const boost::function<void(const sensor_msgs::LaserScan::ConstPtr&)> RangeCallback;
 
 /* Position Helper Code */
@@ -113,8 +117,8 @@ float logit(float p) {
   return log(p) - log(1 - p);
 }
 
-int logit_int(float p) {
-  return (int)round(logit(p) * 100);
+float logitToProbability(float pLogit) {
+  return (int)(100.0 * exp(pLogit) / (1 + exp(pLogit)));
 }
 
 class Coordinate {
@@ -177,10 +181,11 @@ std::vector<Coordinate> bresenham(int x0, int y0, int x1, int y1) {
 class Grid {
  public:
   std::vector<signed char> getVector();
-  void update(int x, int y, int p);
+  void update(int x, int y, float p);
   Grid(int width, int height);
-  Grid(int width, int height, int defaultValue);
+  Grid(int width, int height, float defaultProbability);
  private:
+  std::vector<float> pGrid;
   std::vector<signed char> grid;
   int width;
   int height;
@@ -189,14 +194,18 @@ class Grid {
 Grid::Grid(int width, int height) {
   this->width = width;
   this->height = height;
-  std::vector<signed char> grid(width * height, 0);
+  std::vector<float> pGrid(width * height, logit(0));
+  std::vector<signed char> grid(width * height, logitToProbability(logit(0)));
+  this->pGrid = pGrid;
   this->grid = grid;
 }
 
-Grid::Grid(int width, int height, int defaultValue) {
+Grid::Grid(int width, int height, float defaultProbability) {
   this->width = width;
   this->height = height;
-  std::vector<signed char> grid(width * height, defaultValue);
+  std::vector<float> pGrid(width * height, logit(defaultProbability));
+  std::vector<signed char> grid(width * height, logitToProbability(logit(defaultProbability)));
+  this->pGrid = pGrid;
   this->grid = grid;
 }
 
@@ -204,8 +213,10 @@ std::vector<signed char> Grid::getVector() {
   return this->grid;
 }
 
-void Grid::update(int x, int y, int p) {
-  this->grid[y * this->width + x] = p;
+void Grid::update(int x, int y, float p) {
+  const int index = y * this->width + x;
+  this->pGrid[index] += logit(p) - logit(GRID_DEFAULT_PROBABILITY);
+  this->grid[index] = logitToProbability(this->pGrid[index]);
 }
 
 /* Node Main */
@@ -219,7 +230,7 @@ int main(int argc, char **argv)
   RangeHandler rangeHandler;
 
 #ifdef LIVE
-  PoseCallback poseSubscriberCallbackLive = boost::bind(&PoseHandler::callbackLive, &poseHandler, _1);
+  PoseCallbackLive poseSubscriberCallbackLive = boost::bind(&PoseHandler::callbackLive, &poseHandler, _1);
   ros::Subscriber poseSubscriber = n.subscribe("/indoor_pos", 1, poseSubscriberCallbackLive);
   ROS_INFO("Subscribed to /indoor_pos topic.");
 #else
@@ -237,7 +248,7 @@ int main(int argc, char **argv)
   ros::Rate loop_rate(UPDATE_RATE);
 
   // Initialize Occupancy Grid
-  Grid grid(GRID_WIDTH, GRID_HEIGHT, 50);
+  Grid grid(GRID_WIDTH, GRID_HEIGHT, GRID_DEFAULT_PROBABILITY);
 
   // Initialize Occupancy Grid Message
   nav_msgs::OccupancyGrid msg;
@@ -271,10 +282,10 @@ int main(int argc, char **argv)
         int j;
         for (j = 0; j < lineCoordinates.size(); j++) {
           Coordinate coord = lineCoordinates[j];
-          grid.update(coord.x, coord.y, 0);
+          grid.update(coord.x, coord.y, P_NO_OBJECT);
         }
 
-        grid.update(hitX, hitY, 100);
+        grid.update(hitX, hitY, P_HIT_OBJECT);
       }
     }
 
