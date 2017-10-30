@@ -59,6 +59,7 @@ public:
     virtual ~ParticleFilter() = default;
 
     void run(const Pose& ips, const Odometry& wheel);
+    void publish(const ros::Publisher& publisher);
 
 private:
     ros::Time prevTime;

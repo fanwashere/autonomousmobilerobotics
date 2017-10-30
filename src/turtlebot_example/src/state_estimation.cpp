@@ -20,6 +20,10 @@ namespace
         return (1.0/(s*sqrt(2.0*M_PI)))*exp(-0.5*squared(x-u)/squared(s));
     }
 
+    std::random_device rngDevice;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 rngGenerator(rngDevice()); //Standard mersenne_twister_engine seeded with random_device()
+    std::uniform_real_distribution<> dis(1.0, 2.0);
+
     using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
     using PoseLiveCallback = boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)>;
     using OdometryCallback = boost::function<void(const nav_msgs::Odometry::ConstPtr&)>;
@@ -38,6 +42,8 @@ void PoseHandler::callbackSim(const gazebo_msgs::ModelStates::ConstPtr& msg)
     pose.x = msg->pose[i].position.x ;
     pose.y = msg->pose[i].position.y ;
     pose.yaw = tf::getYaw(msg->pose[i].orientation);
+
+    // TODO: add noise
 }
 
 void PoseHandler::callbackLive(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
@@ -54,7 +60,7 @@ Odometry OdometryHandler::getOdometry() const
 
 void OdometryHandler::callback(const nav_msgs::Odometry::ConstPtr& msg)
 {
-    // Pose containds all the position information
+    // Pose contains all the position information
     odometry.pose.x = msg->pose.pose.position.x;
     odometry.pose.y = msg->pose.pose.position.y;
     odometry.pose.yaw = tf::getYaw(msg->pose.pose.orientation);
@@ -73,7 +79,9 @@ ParticleFilter::ParticleFilter(uint32_t numParticles)
     , particles(numParticles)
     , predictions(numParticles)
     , prevTime(ros::Time::now())
-{}
+{
+    std::generate(particles.begin(), particles.end, [](){})
+}
 
 void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
 {
@@ -94,12 +102,12 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
         // Use the motion model to calculate predictions\
         // Check if wheel is in global or not
 
-        predictions[i].x = particles[i].x + wheel.pose.varx + wheel.twist.twist.linear.x * dt;
-        predictions[i].y = particles[i].y + wheel.pose.vary + wheel.twist.twist.linear.y * dt;
+        predictions[i].x = particles[i].x + wheel.pose.varx + cos(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
+        predictions[i].y = particles[i].y + wheel.pose.vary + sin(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
         predictions[i].yaw = particles[i].yaw + wheel.twist.twist.angular.z * dt;
 
         // Update weights
-        weights[i] = normpdf(ips.x, predictions[i].x, Q) * normpdf(ips.y, predictions[i].y, Q);
+        // weights[i] = normpdf(ips.x, predictions[i].x, Q) * normpdf(ips.y, predictions[i].y, Q);
         cumsum_weight += weights[i];
         weights[i] = cumsum_weight;
     }
@@ -126,7 +134,7 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
     prevTime = currentTime;
 }
 
-void publishParticles(const ros::Publisher& publisher, const Pose& pose)
+void ParticleFilter::publish(const ros::Publisher& publisher)
 {
     visualization_msgs::Marker marker;
     marker.header.frame_id = "/particle_frame";
@@ -138,11 +146,14 @@ void publishParticles(const ros::Publisher& publisher, const Pose& pose)
     marker.scale.y = 0.2;
     marker.color.g = 1.0f;
 
-    geometry_msgs::Point point;
-    point.x = pose.x;
-    point.y = pose.y;
+    for (int i = 0 ; i < numParticles; i++) 
+    {
+        geometry_msgs::Point point;
+        point.x = predictions[i].x;
+        point.y = predictions[i].y;
 
-    marker.points.push_back(point);
+        marker.points.push_back(point);
+    }
 
     publisher.publish(marker);
 }
@@ -179,8 +190,8 @@ int main(int argc, char **argv)
         const auto pose = poseHandler.getPose();
         // const Pose& ips, const Odometry& wheel
         particleFilter.run(pose, odom);
-        publishParticles(particlePublisher, pose);
-
+        particleFilter.publish(particlePublisher);
+        //ROS_INFO("YAW: IPS[%f], twist[%f]", pose.yaw, odom.twist.twist.angular.z);
         ros::spinOnce();
         rate.sleep();
     }
