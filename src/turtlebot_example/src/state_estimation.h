@@ -13,9 +13,7 @@ struct Pose
     double x;
     double y;
     double yaw;
-
-    double varx;
-    double vary;
+    double covariance [3][3];
 };
 
 class PoseHandler

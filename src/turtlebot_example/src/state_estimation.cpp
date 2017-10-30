@@ -1,23 +1,23 @@
 #include "state_estimation.h"
-
 #include <boost/bind.hpp>
 #include <tf/transform_datatypes.h>
 #include <visualization_msgs/Marker.h>
 #include <math.h>
+#include <Eigen/Dense>
 
 namespace
 {
     const double RATE = 1.0;
-    const uint32_t NUMPARTICLES = 10;
+    const uint32_t NUMPARTICLES = 100;
     
     constexpr double squared(double x)
     {
         return x*x;
     }
-
-    constexpr double normpdf(double x, double u, double s) 
+    // return (1.0/(s*sqrt(2.0*M_PI)))*exp(-0.5*squared(x-u)/squared(s));
+    double multivariateGaussianCalculation(std::vector<double> x, std::vector<double> u, double[][3] cmatrix) 
     { 
-        return (1.0/(s*sqrt(2.0*M_PI)))*exp(-0.5*squared(x-u)/squared(s));
+        return -1;    
     }
 
     std::random_device rngDevice;  //Will be used to obtain a seed for the random number engine
@@ -69,8 +69,15 @@ void OdometryHandler::callback(const nav_msgs::Odometry::ConstPtr& msg)
     odometry.twist = msg->twist;
 
     // Get Variance with respect to X and Y
-    odometry.pose.varx = (msg->pose.covariance)[0];
-    odometry.pose.vary = (msg->pose.covariance)[6];
+    (odometry.pose.covariance)[0][0] = (msg->pose.covariance)[0];
+    (odometry.pose.covariance)[0][1] = (msg->pose.covariance)[1];
+    (odometry.pose.covariance)[0][2] = (msg->pose.covariance)[2];
+    (odometry.pose.covariance)[1][0] = (msg->pose.covariance)[6];
+    (odometry.pose.covariance)[1][1] = (msg->pose.covariance)[7];
+    (odometry.pose.covariance)[1][2] = (msg->pose.covariance)[8];
+    (odometry.pose.covariance)[2][0] = (msg->pose.covariance)[12];
+    (odometry.pose.covariance)[2][1] = (msg->pose.covariance)[13];
+    (odometry.pose.covariance)[2][2] = (msg->pose.covariance)[14];
 }
 
 ParticleFilter::ParticleFilter(uint32_t numParticles)
@@ -90,9 +97,6 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
     double dt = (currentTime - prevTime).toSec();
 
     // Define setup
-    const double mean = 0.0;
-    const double Q = 0.1;
-
     double cumsum_weight = 0.0;
     double seed = 0.0;
 
@@ -102,9 +106,9 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
         // Use the motion model to calculate predictions\
         // Check if wheel is in global or not
 
-        predictions[i].x = particles[i].x + wheel.pose.varx + cos(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
-        predictions[i].y = particles[i].y + wheel.pose.vary + sin(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
-        predictions[i].yaw = particles[i].yaw + wheel.twist.twist.angular.z * dt;
+        predictions[i].x = particles[i].x + wheel.pose.covariance[0][0] + cos(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
+        predictions[i].y = particles[i].y + wheel.pose.covariance[1][1] + sin(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
+        predictions[i].yaw = particles[i].yaw + wheel.pose.covariance[2][2] + wheel.twist.twist.angular.z * dt;
 
         // Update weights
         // weights[i] = normpdf(ips.x, predictions[i].x, Q) * normpdf(ips.y, predictions[i].y, Q);

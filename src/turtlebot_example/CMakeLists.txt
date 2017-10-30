@@ -11,15 +11,17 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   nav_msgs
+  cmake_modules
 )
 
-find_package(Eigen3 REQUIRED)
+find_package(Eigen REQUIRED)
 
 catkin_package(
 )
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${Eigen_INCLUDE_DIRS}
 )
 
 add_executable(turtlebot_example_node src/turtlebot_example_node.cpp)
@@ -30,5 +32,5 @@ target_link_libraries(turtlebot_example_node
 )
 
 target_link_libraries(state_estimation_node
-  ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES} ${Eigen_LIBRARIES}
 )
