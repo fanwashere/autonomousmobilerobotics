@@ -27,7 +27,7 @@ namespace
 
     std::random_device rngDevice;  //Will be used to obtain a seed for the random number engine
     std::mt19937 rngGenerator(rngDevice()); //Standard mersenne_twister_engine seeded with random_device()
-    std::uniform_real_distribution<> realDist(0.0, 10.0);
+    std::uniform_real_distribution<> realDist(0.1, 1.0);
 
     using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
     using PoseLiveCallback = boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)>;
@@ -116,16 +116,19 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
         // Use the motion model to calculate predictions\
         // Check if wheel is in global or not
 
-        predictions[i].x = particles[i].x + ((double)(wheel.pose.covariance)(0,0)) + cos(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
-        predictions[i].y = particles[i].y + ((double)(wheel.pose.covariance)(1,1)) + sin(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
-        predictions[i].yaw = particles[i].yaw + ((double)(wheel.pose.covariance)(2,2)) + wheel.twist.twist.angular.z * dt;
+        predictions[i].x = particles[i].x + ((wheel.pose.covariance)(0,0)) + cos(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
+        predictions[i].y = particles[i].y + ((wheel.pose.covariance)(1,1)) + sin(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
+        predictions[i].yaw = particles[i].yaw + ((wheel.pose.covariance)(2,2)) + wheel.twist.twist.angular.z * dt;
 
         // Update weights
         Vector3d measurement; Vector3d particle;
         particle(0) = predictions[i].x; particle(1) = predictions[i].y; particle(2) = predictions[i].yaw;
         measurement(0) = ips.x; measurement(1) = ips.y; measurement(2) = ips.yaw;
         
-        // weights[i] = normpdf(ips.x, predictions[i].x, Q) * normpdf(ips.y, predictions[i].y, Q);
+        //ROS_INFO((wheel.pose.covariance)(0,0));
+
+        // weights[i] = multivariateGaussianCalculation(particle, measurement, wheel.pose.covariance);
+        weights[i] = 0.1;
         cumsum_weight += weights[i];
         weights[i] = cumsum_weight;
     }
@@ -136,6 +139,7 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
         seed = cumsum_weight*((double) rand() / (RAND_MAX));
         
         for (int j = 0; j < numParticles; j++) {
+
             if(weights[j] > seed) {
                 particles[i].x = predictions[j].x;
                 particles[i].y = predictions[j].y;
@@ -167,8 +171,8 @@ void ParticleFilter::publish(const ros::Publisher& publisher)
     for (int i = 0 ; i < numParticles; i++) 
     {
         geometry_msgs::Point point;
-        point.x = predictions[i].x;
-        point.y = predictions[i].y;
+        point.x = particles[i].x;
+        point.y = particles[i].y;
 
         marker.points.push_back(point);
     }
