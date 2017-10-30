@@ -3,6 +3,7 @@
 #include <boost/bind.hpp>
 #include <tf/transform_datatypes.h>
 #include <visualization_msgs/Marker.h>
+#include <math.h>
 
 namespace
 {
@@ -52,10 +53,12 @@ Odometry OdometryHandler::getOdometry() const
 
 void OdometryHandler::callback(const nav_msgs::Odometry::ConstPtr& msg)
 {
+    // Pose contains all the position information
     odometry.pose.x = msg->pose.pose.position.x;
     odometry.pose.y = msg->pose.pose.position.y;
     odometry.pose.yaw = tf::getYaw(msg->pose.pose.orientation);
 
+    // Twist contains all the velocity information
     odometry.twist = msg->twist;
 }
 
@@ -73,17 +76,42 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
 
     double dt = (currentTime - prevTime).toSec();
 
+    // Define setup
+    const double mean = 0.0;
+    const double Q = 0.1;
+
+    double cumsum_weight = 0.0;
+    double seed = 0.0;
+
     // Prediction update
     for (int i = 0; i < numParticles; i++)
     {
-        predictions[i].x = particles[i].x + wheel.twist.twist.linear.x * dt;
+        // Use the motion model to calculate predictions
+        predictions[i].x = particles[i].x + wheel.twist.twist.linear.x * dt; // Check for trig
         predictions[i].y = particles[i].x + wheel.twist.twist.linear.y * dt;
         predictions[i].yaw = particles[i].yaw + wheel.twist.twist.angular.z * dt;
+
+        // Update weights
+        weights[i] = normpdf(ips.x, predictions[i].x, Q) + normpdf(ips.y, predictions[i].y, Q) + normpdf(ips.yaw, predictions[i].y, Q);
+        cumsum_weight += weights[i];
+        weights[i] = cumsum_weight;
     }
 
-    // Update weights
-
     // Measurement update
+
+    for (int i = 0 ; i < numParticles; i++) {
+        seed = cumsum_weight*((double) rand() / (RAND_MAX));
+        
+        for (int j = 0; j < numParticles; j++) {
+            if(weights[j] > seed) {
+                particles[i].x = predictions[j].x;
+                particles[i].y = predictions[j].y;
+                particles[i].yaw = predictions[j].yaw;
+                
+                break;
+            }
+        }
+    }
 
     prevTime = currentTime;
 }
