@@ -88,11 +88,11 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
     {
         // Use the motion model to calculate predictions
         predictions[i].x = particles[i].x + wheel.twist.twist.linear.x * dt; // Check for trig
-        predictions[i].y = particles[i].x + wheel.twist.twist.linear.y * dt;
+        predictions[i].y = particles[i].y + wheel.twist.twist.linear.y * dt;
         predictions[i].yaw = particles[i].yaw + wheel.twist.twist.angular.z * dt;
 
         // Update weights
-        weights[i] = normpdf(ips.x, predictions[i].x, Q) + normpdf(ips.y, predictions[i].y, Q) + normpdf(ips.yaw, predictions[i].y, Q);
+        weights[i] = normpdf(ips.x, predictions[i].x, Q) + normpdf(ips.y, predictions[i].y, Q) + normpdf(ips.yaw, predictions[i].yaw, Q);
         cumsum_weight += weights[i];
         weights[i] = cumsum_weight;
     }
@@ -107,7 +107,7 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
                 particles[i].x = predictions[j].x;
                 particles[i].y = predictions[j].y;
                 particles[i].yaw = predictions[j].yaw;
-                
+
                 break;
             }
         }
