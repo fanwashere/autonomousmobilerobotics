@@ -16,15 +16,11 @@ namespace
     // return (1.0/(s*sqrt(2.0*M_PI)))*exp(-0.5*squared(x-u)/squared(s));
     double multivariateGaussianCalculation(Vector3d X, Vector3d U, Matrix3d E) 
     { 
-        if (!E.isInvertible) {
-            return -1;
-        }
-        
         double determinant = pow((2.0*M_PI*E).determinant(), -0.5);
         Matrix3d E_inverse = E.inverse();
         RowVector3d transpose = (X-U).transpose();
 
-        double exp_eval = exp(-0.5*tranpose*E_inverse*(X-U));
+        double exp_eval = exp(-0.5*transpose*E_inverse*(X-U));
 
         return determinant*exp_eval;    
     }
