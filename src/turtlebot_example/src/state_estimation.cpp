@@ -22,7 +22,7 @@ namespace
 
     std::random_device rngDevice;  //Will be used to obtain a seed for the random number engine
     std::mt19937 rngGenerator(rngDevice()); //Standard mersenne_twister_engine seeded with random_device()
-    std::uniform_real_distribution<> dis(1.0, 2.0);
+    std::uniform_real_distribution<> realDist(0.0, 10.0);
 
     using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
     using PoseLiveCallback = boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)>;
@@ -87,7 +87,12 @@ ParticleFilter::ParticleFilter(uint32_t numParticles)
     , predictions(numParticles)
     , prevTime(ros::Time::now())
 {
-    std::generate(particles.begin(), particles.end, [](){})
+    for (Pose& pose : particles)
+    {
+        pose.x = realDist(rngGenerator);
+        pose.y = realDist(rngGenerator);
+        pose.yaw = realDist(rngGenerator);
+    }
 }
 
 void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
