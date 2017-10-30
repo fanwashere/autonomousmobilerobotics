@@ -76,13 +76,13 @@ void OdometryHandler::callback(const nav_msgs::Odometry::ConstPtr& msg)
     // Get Variance with respect to X and Y
     (odometry.pose.covariance)(0,0) = (msg->pose.covariance)[0];
     (odometry.pose.covariance)(0,1) = (msg->pose.covariance)[1];
-    (odometry.pose.covariance)(0,2) = (msg->pose.covariance)[2];
+    (odometry.pose.covariance)(0,2) = (msg->pose.covariance)[5];
     (odometry.pose.covariance)(1,0) = (msg->pose.covariance)[6];
     (odometry.pose.covariance)(1,1) = (msg->pose.covariance)[7];
-    (odometry.pose.covariance)(1,2) = (msg->pose.covariance)[8];
-    (odometry.pose.covariance)(2,0) = (msg->pose.covariance)[12];
-    (odometry.pose.covariance)(2,1) = (msg->pose.covariance)[13];
-    (odometry.pose.covariance)(2,2) = (msg->pose.covariance)[14];
+    (odometry.pose.covariance)(1,2) = (msg->pose.covariance)[11];
+    (odometry.pose.covariance)(2,0) = (msg->pose.covariance)[30];
+    (odometry.pose.covariance)(2,1) = (msg->pose.covariance)[31];
+    (odometry.pose.covariance)(2,2) = (msg->pose.covariance)[35];
 }
 
 ParticleFilter::ParticleFilter(uint32_t numParticles)
@@ -145,8 +145,8 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
                 particles[i].y = predictions[j].y;
                 particles[i].yaw = predictions[j].yaw;
 
-                ROS_INFO("IPS_X : %f - IPS_Y : %f", ips.x, ips.y);
-                ROS_INFO("PRT_X : %f - PRT_Y : %f", particles[i].x, particles[i].y);
+                // ROS_INFO("IPS_X : %f - IPS_Y : %f", ips.x, ips.y);
+                // ROS_INFO("PRT_X : %f - PRT_Y : %f", particles[i].x, particles[i].y);
 
                 break;
             }
