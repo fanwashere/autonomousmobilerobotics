@@ -1,12 +1,14 @@
 #include "state_estimation.h"
 #include <boost/bind.hpp>
+#include <geometry_msgs/PoseStamped.h>
 #include <tf/transform_datatypes.h>
 #include <visualization_msgs/Marker.h>
+#include <nav_msgs/Path.h>
 #include <math.h>
 
 namespace
 {
-    const double RATE = 10.0;
+    const double RATE = 1.0;
     const uint32_t NUMPARTICLES = 100;
 
     constexpr double squared(double x)
@@ -27,7 +29,8 @@ namespace
 
     std::random_device rngDevice;  //Will be used to obtain a seed for the random number engine
     std::mt19937 rngGenerator(rngDevice()); //Standard mersenne_twister_engine seeded with random_device()
-    std::uniform_real_distribution<> realDist(0.1, 1.0);
+    std::uniform_real_distribution<> realDist(-10.0, 10.0);
+    std::normal_distribution<> noise(-1.0, 1.0);
 
     using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
     using PoseLiveCallback = boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)>;
@@ -45,9 +48,9 @@ void PoseHandler::callbackSim(const gazebo_msgs::ModelStates::ConstPtr& msg)
     for(i = 0; i < msg->name.size(); i++) if(msg->name[i] == "mobile_base") break;
     
     // Random Noise Added
-    pose.x = msg->pose[i].position.x + ((double) rand() / (RAND_MAX));
-    pose.y = msg->pose[i].position.y + ((double) rand() / (RAND_MAX));
-    pose.yaw = tf::getYaw(msg->pose[i].orientation) + ((double) rand() / (RAND_MAX));
+    pose.x = msg->pose[i].position.x + noise(rngGenerator);
+    pose.y = msg->pose[i].position.y + noise(rngGenerator);
+    pose.yaw = tf::getYaw(msg->pose[i].orientation) + noise(rngGenerator);
 }
 
 void PoseHandler::callbackLive(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
@@ -114,10 +117,9 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
     {
         // Use the motion model to calculate predictions\
         // Check if wheel is in global or not
-
-        predictions[i].x = particles[i].x + cos(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
-        predictions[i].y = particles[i].y + sin(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
-        predictions[i].yaw = particles[i].yaw + wheel.twist.twist.angular.z * dt;
+        predictions[i].x = particles[i].x + cos(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt + noise(rngGenerator);
+        predictions[i].y = particles[i].y + sin(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt + noise(rngGenerator);
+        predictions[i].yaw = particles[i].yaw + wheel.twist.twist.angular.z * dt + noise(rngGenerator);
 
         // Update weights
         Vector3d measurement; Vector3d particle;
@@ -141,8 +143,8 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
                 particles[i].y = predictions[j].y;
                 particles[i].yaw = predictions[j].yaw;
 
-                ROS_INFO("IPS_X : %f - IPS_Y : %f", ips.x, ips.y);
-                ROS_INFO("PRT_X : %f - PRT_Y : %f", particles[i].x, particles[i].y);
+                // ROS_INFO("IPS_X : %f - IPS_Y : %f", ips.x, ips.y);
+                // ROS_INFO("PRT_X : %f - PRT_Y : %f", particles[i].x, particles[i].y);
 
                 break;
             }
@@ -161,8 +163,8 @@ void ParticleFilter::publish(const ros::Publisher& publisher)
         marker.header.stamp = ros::Time::now();
         marker.id = i;
         marker.type = visualization_msgs::Marker::POINTS;
-        marker.scale.x = 0.1;
-        marker.scale.y = 0.1;
+        marker.scale.x = 0.2;
+        marker.scale.y = 0.2;
         marker.color.g = 1.0f;
         marker.color.a = 1.0f;
 
@@ -173,6 +175,13 @@ void ParticleFilter::publish(const ros::Publisher& publisher)
         marker.points.push_back(point);
         publisher.publish(marker);
     }
+}
+
+void publishPath(const ros::Publisher& publisher, const Pose& pose)
+{
+    geometry_msgs::PoseStamped stampedPose;
+
+
 }
 
 int main(int argc, char **argv)
@@ -198,15 +207,23 @@ int main(int argc, char **argv)
     ROS_INFO("Subscribed to /odom topic");
 
     ros::Publisher particlePublisher = n.advertise<visualization_msgs::Marker>("/particle_filter", 1);
+    ros::Publisher pathPublisher = n.advertise<nav_msgs::Path>("/path", 1);
 
     ParticleFilter particleFilter(NUMPARTICLES);
-    
+    nav_msgs::Path path;
+
     while(ros::ok())
     {
         const auto odom = odomHandler.getOdometry();
         const auto pose = poseHandler.getPose();
+
+        geometry_msgs::PoseStamped stampedPose;
+        path.poses.push_back(stampedPose);
+        pathPublisher.publish(path);
+
         particleFilter.run(pose, odom);
         particleFilter.publish(particlePublisher);
+        
         ros::spinOnce();
         rate.sleep();
     }
