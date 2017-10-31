@@ -264,14 +264,14 @@ int main(int argc, char **argv)
     const int gridX = (pose.x / GRID_RESOLUTION) + (GRID_WIDTH / 2);
     const int gridY = (pose.y / GRID_RESOLUTION) + (GRID_HEIGHT / 2);
 
-    ROS_INFO("Position Abs[%f %f %f] Grid[%d %d]", pose.x, pose.y, pose.theta, gridX, gridY);
+    ROS_INFO("Position [%f %f %f] Grid[%d %d]", pose.x, pose.y, pose.theta, gridX, gridY);
 
     if (ranges.size() > 0) {
       int i;
       for (i = 0; i < ranges.size(); i++) {
-        const float angle = ranges[i].angle + pose.theta + M_PI;
-        const int hitX = (int)round(ranges[i].range * sin(angle) / GRID_RESOLUTION) + gridX;
-        const int hitY = (int)round(ranges[i].range * -cos(angle) / GRID_RESOLUTION) + gridY;
+        const float angle = ranges[i].angle + pose.theta;
+        const int hitX = (int)round(ranges[i].range * cos(angle) / GRID_RESOLUTION) + gridX;
+        const int hitY = (int)round(ranges[i].range * sin(angle) / GRID_RESOLUTION) + gridY;
 
         if (hitX > GRID_WIDTH || hitX < 0 || hitY > GRID_HEIGHT || hitY < 0) {
           continue;
