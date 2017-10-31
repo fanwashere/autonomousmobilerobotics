@@ -7,15 +7,18 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TwistWithCovariance.h>
 #include <nav_msgs/Odometry.h>
+#include <Eigen/Dense>
+
+using namespace Eigen;
+
+#define LIVE
 
 struct Pose 
 {
     double x;
     double y;
     double yaw;
-
-    double varx;
-    double vary;
+    Matrix3d covariance;
 };
 
 class PoseHandler
