@@ -11,6 +11,8 @@
 
 using namespace Eigen;
 
+#define LIVE
+
 struct Pose 
 {
     double x;

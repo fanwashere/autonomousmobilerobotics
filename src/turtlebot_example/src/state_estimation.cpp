@@ -197,7 +197,7 @@ int main(int argc, char **argv)
     auto odomSubscriber = n.subscribe("/odom", 1, odomCallback);
     ROS_INFO("Subscribed to /odom topic");
 
-    ros::Publisher particlePublisher = n.advertise<visualization_msgs::Marker>("/particle_filter", 1, true);
+    ros::Publisher particlePublisher = n.advertise<visualization_msgs::Marker>("/particle_filter", 1);
 
     ParticleFilter particleFilter(NUMPARTICLES);
     
