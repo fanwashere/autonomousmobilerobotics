@@ -115,9 +115,9 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
         // Use the motion model to calculate predictions\
         // Check if wheel is in global or not
 
-        predictions[i].x = particles[i].x + ((wheel.pose.covariance)(0,0)) + cos(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
-        predictions[i].y = particles[i].y + ((wheel.pose.covariance)(1,1)) + sin(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
-        predictions[i].yaw = particles[i].yaw + ((wheel.pose.covariance)(2,2)) + wheel.twist.twist.angular.z * dt;
+        predictions[i].x = particles[i].x + cos(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
+        predictions[i].y = particles[i].y + sin(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
+        predictions[i].yaw = particles[i].yaw + wheel.twist.twist.angular.z * dt;
 
         // Update weights
         Vector3d measurement; Vector3d particle;
@@ -154,26 +154,25 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
 
 void ParticleFilter::publish(const ros::Publisher& publisher)
 {
-    visualization_msgs::Marker marker;
-    marker.header.frame_id = "/particle_frame";
-    marker.header.stamp = ros::Time::now();
-    marker.ns = "particle_filter";
-    marker.id = 0;
-    marker.type = visualization_msgs::Marker::POINTS;
-    marker.scale.x = 0.2;
-    marker.scale.y = 0.2;
-    marker.color.g = 1.0f;
-
     for (int i = 0 ; i < numParticles; i++) 
     {
+        visualization_msgs::Marker marker;
+        marker.header.frame_id = "/map";
+        marker.header.stamp = ros::Time::now();
+        marker.id = i;
+        marker.type = visualization_msgs::Marker::POINTS;
+        marker.scale.x = 0.1;
+        marker.scale.y = 0.1;
+        marker.color.g = 1.0f;
+        marker.color.a = 1.0f;
+
         geometry_msgs::Point point;
         point.x = particles[i].x;
         point.y = particles[i].y;
 
         marker.points.push_back(point);
+        publisher.publish(marker);
     }
-
-    publisher.publish(marker);
 }
 
 int main(int argc, char **argv)
@@ -198,7 +197,7 @@ int main(int argc, char **argv)
     auto odomSubscriber = n.subscribe("/odom", 1, odomCallback);
     ROS_INFO("Subscribed to /odom topic");
 
-    ros::Publisher particlePublisher = n.advertise<visualization_msgs::Marker>("/particle_filter", 1);
+    ros::Publisher particlePublisher = n.advertise<visualization_msgs::Marker>("/particle_filter", 1, true);
 
     ParticleFilter particleFilter(NUMPARTICLES);
     
