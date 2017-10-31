@@ -255,6 +255,18 @@ int main(int argc, char **argv)
   msg.info.resolution = (float)GRID_RESOLUTION;
   msg.info.width = (int)GRID_WIDTH;
   msg.info.height = (int)GRID_HEIGHT;
+  geometry_msgs::Pose origin;
+  geometry_msgs::Point position;
+  position.x = (float)(GRID_RESOLUTION * (GRID_WIDTH / 2));
+  position.y = (float)(-1 * GRID_RESOLUTION * (GRID_HEIGHT / 2));
+  origin.position = position;
+  geometry_msgs::Quaternion orientation;
+  orientation.w = 0.707;
+  orientation.x = 0.0;
+  orientation.y = 0.0;
+  orientation.z = 0.707;
+  origin.orientation = orientation;
+  msg.info.origin = origin;
   msg.data = grid.getVector();
 
   while(ros::ok()) {
