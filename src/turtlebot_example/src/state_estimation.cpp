@@ -162,7 +162,7 @@ void ParticleFilter::publish(const ros::Publisher& publisher)
         marker.header.frame_id = "/map";
         marker.header.stamp = ros::Time::now();
         marker.id = i;
-        marker.type = visualization_msgs::Marker::POINTS;
+        marker.type = visualization_msgs::Marker::SPHERE;
         marker.scale.x = 0.2;
         marker.scale.y = 0.2;
         marker.color.g = 1.0f;
