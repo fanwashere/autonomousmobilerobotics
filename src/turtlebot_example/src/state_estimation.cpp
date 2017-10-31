@@ -6,7 +6,7 @@
 
 namespace
 {
-    const double RATE = 1.0;
+    const double RATE = 10.0;
     const uint32_t NUMPARTICLES = 100;
 
     constexpr double squared(double x)
