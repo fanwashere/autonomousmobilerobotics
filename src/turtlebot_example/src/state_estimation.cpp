@@ -43,12 +43,11 @@ void PoseHandler::callbackSim(const gazebo_msgs::ModelStates::ConstPtr& msg)
 {
     int i;
     for(i = 0; i < msg->name.size(); i++) if(msg->name[i] == "mobile_base") break;
-
-    pose.x = msg->pose[i].position.x ;
-    pose.y = msg->pose[i].position.y ;
-    pose.yaw = tf::getYaw(msg->pose[i].orientation);
-
-    // TODO: add noise
+    
+    // Random Noise Added
+    pose.x = msg->pose[i].position.x + ((double) rand() / (RAND_MAX));
+    pose.y = msg->pose[i].position.y + ((double) rand() / (RAND_MAX));
+    pose.yaw = tf::getYaw(msg->pose[i].orientation) + ((double) rand() / (RAND_MAX));
 }
 
 void PoseHandler::callbackLive(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
@@ -125,10 +124,7 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
         particle(0) = predictions[i].x; particle(1) = predictions[i].y; particle(2) = predictions[i].yaw;
         measurement(0) = ips.x; measurement(1) = ips.y; measurement(2) = ips.yaw;
         
-        //ROS_INFO((wheel.pose.covariance)(0,0));
-
-        // weights[i] = multivariateGaussianCalculation(particle, measurement, wheel.pose.covariance);
-        weights[i] = 0.1;
+        weights[i] = multivariateGaussianCalculation(particle, measurement, wheel.pose.covariance);
         cumsum_weight += weights[i];
         weights[i] = cumsum_weight;
     }
@@ -145,8 +141,8 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
                 particles[i].y = predictions[j].y;
                 particles[i].yaw = predictions[j].yaw;
 
-                // ROS_INFO("IPS_X : %f - IPS_Y : %f", ips.x, ips.y);
-                // ROS_INFO("PRT_X : %f - PRT_Y : %f", particles[i].x, particles[i].y);
+                ROS_INFO("IPS_X : %f - IPS_Y : %f", ips.x, ips.y);
+                ROS_INFO("PRT_X : %f - PRT_Y : %f", particles[i].x, particles[i].y);
 
                 break;
             }
@@ -210,10 +206,8 @@ int main(int argc, char **argv)
     {
         const auto odom = odomHandler.getOdometry();
         const auto pose = poseHandler.getPose();
-        // const Pose& ips, const Odometry& wheel
         particleFilter.run(pose, odom);
         particleFilter.publish(particlePublisher);
-        //ROS_INFO("YAW: IPS[%f], twist[%f]", pose.yaw, odom.twist.twist.angular.z);
         ros::spinOnce();
         rate.sleep();
     }
