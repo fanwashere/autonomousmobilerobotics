@@ -15,7 +15,7 @@ namespace
     {
         return x*x;
     }
-    // return (1.0/(s*sqrt(2.0*M_PI)))*exp(-0.5*squared(x-u)/squared(s));
+    
     double multivariateGaussianCalculation(Vector3d X, Vector3d U, Matrix3d E) 
     { 
         double determinant = pow((2.0*M_PI*E).determinant(), -0.5);
@@ -46,11 +46,17 @@ void PoseHandler::callbackSim(const gazebo_msgs::ModelStates::ConstPtr& msg)
 {
     int i;
     for(i = 0; i < msg->name.size(); i++) if(msg->name[i] == "mobile_base") break;
-    
-    // Random Noise Added
+
+#ifdef LIVE
+    pose.x = msg->pose[i].position.x;
+    pose.y = msg->pose[i].position.y;
+    pose.yaw = tf::getYaw(msg->pose[i].orientation);
+#else
     pose.x = msg->pose[i].position.x + noise(rngGenerator);
     pose.y = msg->pose[i].position.y + noise(rngGenerator);
     pose.yaw = tf::getYaw(msg->pose[i].orientation) + noise(rngGenerator);
+#endif
+
 }
 
 void PoseHandler::callbackLive(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
@@ -115,17 +121,11 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
     // Prediction update
     for (int i = 0; i < numParticles; i++)
     {
-        // Use the motion model to calculate predictions\
-        // Check if wheel is in global or not
-#ifdef LIVE
-        predictions[i].x = particles[i].x + cos(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
-        predictions[i].y = particles[i].y + sin(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt;
-        predictions[i].yaw = particles[i].yaw + wheel.twist.twist.angular.z * dt;
-#else
+        // Use the motion model to calculate predictions
         predictions[i].x = particles[i].x + cos(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt + noise(rngGenerator);
         predictions[i].y = particles[i].y + sin(wheel.pose.yaw) * wheel.twist.twist.linear.x * dt + noise(rngGenerator);
         predictions[i].yaw = particles[i].yaw + wheel.twist.twist.angular.z * dt + noise(rngGenerator);
-#endif
+
         // Update weights
         Vector3d measurement; Vector3d particle;
         particle(0) = predictions[i].x; particle(1) = predictions[i].y; particle(2) = predictions[i].yaw;
@@ -147,7 +147,7 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
                 particles[i].x = predictions[j].x;
                 particles[i].y = predictions[j].y;
                 particles[i].yaw = predictions[j].yaw;
-
+                
                 // ROS_INFO("IPS_X : %f - IPS_Y : %f", ips.x, ips.y);
                 // ROS_INFO("PRT_X : %f - PRT_Y : %f", particles[i].x, particles[i].y);
 
