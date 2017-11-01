@@ -8,7 +8,7 @@
 
 namespace
 {
-    const double RATE = 10.0;
+    const double RATE = 1.0;
     const uint32_t NUMPARTICLES = 300;
 
     constexpr double squared(double x)
@@ -27,7 +27,7 @@ namespace
         return determinant*exp_eval;    
     }
 
-    std::random_device rngDevice;  //Will be used to obtain a seed for the random number engine
+    std::random_device rngDevice;  // Will be used to obtain a seed for the random number engine
     std::mt19937 rngGenerator(rngDevice()); //Standard mersenne_twister_engine seeded with random_device()
     std::uniform_real_distribution<> realDist(-10.0, 10.0);
     std::normal_distribution<> noise(-0.1, 0.1);
@@ -47,16 +47,9 @@ void PoseHandler::callbackSim(const gazebo_msgs::ModelStates::ConstPtr& msg)
     int i;
     for(i = 0; i < msg->name.size(); i++) if(msg->name[i] == "mobile_base") break;
 
-#ifdef LIVE
-    pose.x = msg->pose[i].position.x;
-    pose.y = msg->pose[i].position.y;
-    pose.yaw = tf::getYaw(msg->pose[i].orientation);
-#else
     pose.x = msg->pose[i].position.x + noise(rngGenerator);
     pose.y = msg->pose[i].position.y + noise(rngGenerator);
     pose.yaw = tf::getYaw(msg->pose[i].orientation) + noise(rngGenerator);
-#endif
-
 }
 
 void PoseHandler::callbackLive(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
@@ -138,18 +131,18 @@ void ParticleFilter::run(const Pose& ips, const Odometry& wheel)
 
     // Measurement update
 
-    for (int i = 0 ; i < numParticles; i++) {
+    for (int i = 0 ; i < numParticles; i++)
+    {
         seed = cumsum_weight*((double) rand() / (RAND_MAX));
         
-        for (int j = 0; j < numParticles; j++) {
+        for (int j = 0; j < numParticles; j++)
+        {
 
-            if(weights[j] > seed) {
+            if(weights[j] > seed)
+            {
                 particles[i].x = predictions[j].x;
                 particles[i].y = predictions[j].y;
                 particles[i].yaw = predictions[j].yaw;
-                
-                // ROS_INFO("IPS_X : %f - IPS_Y : %f", ips.x, ips.y);
-                // ROS_INFO("PRT_X : %f - PRT_Y : %f", particles[i].x, particles[i].y);
 
                 break;
             }
