@@ -15,12 +15,17 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
 )
 
+# Add other local cpp files here
+set(SOURCES
+  src/pose.cpp
+)
+
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(planning_node src/planning_node.cpp)
-add_executable(control_node src/control_node.cpp)
+add_executable(planning_node src/planning_node.cpp ${SOURCES})
+add_executable(control_node src/control_node.cpp ${SOURCES})
 
 target_link_libraries(planning_node
   ${catkin_LIBRARIES}
