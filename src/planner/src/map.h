@@ -7,6 +7,7 @@ struct Coordinate
     int x;
     int y;
 
+    Coordinate() = default;
     Coordinate(int setX, int setY);
 
     double distanceTo(Coordinate target);
