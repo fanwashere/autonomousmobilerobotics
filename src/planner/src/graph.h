@@ -7,11 +7,11 @@ class Node
     using Neighbor = std::pair<std::shared_ptr<Node>, double>;
 
 public:
-    Node(Coordinate coord);
+    Node(const Coordinate &coord);
 
     void addNeighbor(Node neighbor, double distance);
-    std::vector<Neighbor> getNeighbors();
-    Coordinate getCoordinate();
+    std::vector<Neighbor> getNeighbors() const;
+    Coordinate getCoordinate() const;
 
 private:
     std::vector<Neighbor> neighbors;
@@ -24,12 +24,12 @@ private:
 class Graph
 {
 public:
-    Graph(Grid grid);
+    Graph(const Grid &grid);
 
-    void addNode(Node node);
+    void addNode(const Node &node);
 
 private:
-    std::vector<Node> nodes;
+    std::vector<std::shared_ptr<Node>> nodes;
     Grid grid;
     int iota = 0;
 

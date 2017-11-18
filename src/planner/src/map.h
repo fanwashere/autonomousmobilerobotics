@@ -4,8 +4,8 @@
 
 struct Coordinate
 {
-    int x = 0;
-    int y = 0;
+    int x;
+    int y;
 
     Coordinate(int setX, int setY);
 
@@ -18,20 +18,20 @@ class Grid
 public:
     Grid() = default;
     virtual ~Grid() = default;
-    Grid(int width, int height, float resolution, std::vector<signed char> grid);
+    Grid(int width, int height, float resolution, std::vector<int8_t> grid);
 
-    float getResolution();
-    Coordinate getRandomCoordinate();
-    bool checkOccupancy(Coordinate coord);
-    bool checkCollision(Coordinate from, Coordinate to);
+    float getResolution() const;
+    Coordinate getRandomCoordinate() const;
+    bool checkOccupancy(const Coordinate &coord);
+    bool checkCollision(const Coordinate &from, const Coordinate &to);
 
 private:
-    std::vector<signed char> grid;
+    std::vector<int8_t> grid;
     int width;
     int height;
     float resolution;
 
-    std::vector<Coordinate> bresenham(Coordinate from, Coordinate to);
+    std::vector<Coordinate> bresenham(const Coordinate &from, const Coordinate &to);
 };
 
 class MapHandler

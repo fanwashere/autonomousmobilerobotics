@@ -1,24 +1,27 @@
 #include "graph.h"
 #include "map.h"
 
-#define NEIGHBOR_MAX_DISTANCE 30.0
-#define Neighbor std::pair<std::shared_ptr<Node>, double>
+namespace
+{
+    #define NEIGHBOR_MAX_DISTANCE 30.0
+    #define Neighbor std::pair<std::shared_ptr<Node>, double>
+}
 
-Node::Node(Coordinate c) {
+Node::Node(const Coordinate &c) {
     coord = c;
 }
 
-void Node::addNeighbor(Node neighbor, double distance)
+void Node::addNeighbor(Node neighbor, double distance) const
 {
     neighbors.push_back(std::make_pair(std::make_shared<Node>(neighbor), distance));
 }
 
-std::vector<Neighbor> Node::getNeighbors()
+std::vector<Neighbor> Node::getNeighbors() const
 {
     return neighbors;
 }
 
-Coordinate Node::getCoordinate()
+Coordinate Node::getCoordinate() const
 {
     return coord;
 }
@@ -28,12 +31,12 @@ void Node::assignId(int setId)
     id = setId;
 }
 
-Graph::Graph(Grid g)
+Graph::Graph(const Grid &g)
 {
     grid = g;
 }
 
-void Graph::addNode(Node node)
+void Graph::addNode(const Node &node)
 {
     Coordinate coord = node.getCoordinate();
     node.assignId(iota++);
@@ -48,7 +51,7 @@ void Graph::addNode(Node node)
         }
     }
 
-    nodes.push_back(node);
+    nodes.push_back(std::make_shared<Node>(node));
 }
 
 void Graph::addVertex(Node n1, Node n2, double weight)

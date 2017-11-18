@@ -1,7 +1,9 @@
 #include "map.h"
 #include "nav_msgs/OccupancyGrid.h"
 
-#define sign(x) ((x > 0) ? 1 : ((x < 0) ? -1 : 0))
+namespace {
+    constexpr int sign(x) { return ((x > 0) ? 1 : ((x < 0) ? -1 : 0)); }
+}
 
 Coordinate::Coordinate(int setX, int setY)
 {
@@ -25,7 +27,7 @@ double Coordinate::distanceTo(Coordinate target, double resolution)
     return sqrt(pow(dx, 2) + pow(dy, 2));
 }
 
-Grid::Grid(int w, int h, float r, std::vector<signed char> g)
+Grid::Grid(int w, int h, float r, std::vector<int8_t> g)
 {
     width = w;
     height = h;
@@ -33,19 +35,19 @@ Grid::Grid(int w, int h, float r, std::vector<signed char> g)
     grid = g;
 }
 
-float Grid::getResolution()
+float Grid::getResolution() const
 {
     return resolution;
 }
 
-Coordinate Grid::getRandomCoordinate()
+Coordinate Grid::getRandomCoordinate() const
 {
     int x = rand() % width;
     int y = rand() % height;
     return Coordinate(x, y);
 }
 
-bool Grid::checkOccupancy(Coordinate coord)
+bool Grid::checkOccupancy(const Coordinate &coord)
 {
     int index = coord.y * width + coord.x;
     return grid[index]; // TODO Differentiate occupied or not
@@ -77,7 +79,7 @@ bool Grid::checkCollision(Coordinate from, Coordinate to)
     return false;
 }
 
-std::vector<Coordinate> Grid::bresenham(Coordinate from, Coordinate to) {
+std::vector<Coordinate> Grid::bresenham(const Coordinate &from, const Coordinate &to) {
     int x0 = from.x;
     int y0 = from.y;
     int x1 = to.x;

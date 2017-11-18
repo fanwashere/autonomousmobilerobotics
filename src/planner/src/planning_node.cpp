@@ -2,7 +2,7 @@
 #include "pose.h"
 #include "map.h"
 #include "graph.h"
-#include "nav_msgs/OccupancyGrid.h"
+#include <nav_msgs/OccupancyGrid.h>
 
 namespace
 {
