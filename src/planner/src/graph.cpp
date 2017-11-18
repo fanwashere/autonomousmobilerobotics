@@ -3,6 +3,10 @@
 
 #define Neighbor std::pair<std::shared_ptr<Node>, double>
 
+Node::Node(Coordinate co) {
+    coord = co;
+}
+
 Coordinate Node::getCoordinate()
 {
     return coord;
@@ -21,6 +25,11 @@ void Node::addNeighbor(Node neighbor, double distance)
 std::vector<Neighbor> Node::getNeighbors()
 {
     return neighbors;
+}
+
+Graph::Graph(Grid g)
+{
+    grid = g;
 }
 
 void Graph::addNode(Node node)

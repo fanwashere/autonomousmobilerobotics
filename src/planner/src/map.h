@@ -7,6 +7,8 @@ struct Coordinate
     int x = 0;
     int y = 0;
 
+    Coordinate() = default;
+    virtual ~Coordinate() = default;
     Coordinate(int setX, int setY) {
         x = setX;
         y = setY;
@@ -21,14 +23,14 @@ class Grid
 public:
     Grid() = default;
     virtual ~Grid() = default;
-    Grid(int width, int height, float resolution, std::vector<signed char, std::allocator<signed char>> grid);
+    Grid(int width, int height, float resolution, std::vector<signed char> grid);
     Coordinate getRandomCoordinate();
     bool checkOccupancy(Coordinate coord);
     bool checkCollision(Coordinate from, Coordinate to);
     float getResolution();
 
 private:
-    std::vector<signed char, std::allocator<signed char>> grid;
+    std::vector<signed char> grid;
     int width;
     int height;
     float resolution;

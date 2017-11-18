@@ -19,6 +19,14 @@ double Coordinate::distanceTo(Coordinate target, double resolution)
     return sqrt(pow(dx, 2) + pow(dy, 2));
 }
 
+Grid::Grid(int w, int h, float r, std::vector<signed char> g)
+{
+    width = w;
+    height = h;
+    resolution = r;
+    grid = g;
+}
+
 float Grid::getResolution()
 {
     return resolution;
