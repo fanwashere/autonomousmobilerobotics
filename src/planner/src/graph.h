@@ -12,13 +12,12 @@ public:
     void addNeighbor(Node neighbor, double distance);
     std::vector<Neighbor> getNeighbors();
     Coordinate getCoordinate();
+    void assignId(int id);
 
 private:
     std::vector<Neighbor> neighbors;
     Coordinate coord;
     int id;
-
-    void assignId(int id);
 };
 
 class Graph
