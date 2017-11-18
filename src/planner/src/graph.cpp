@@ -1,6 +1,9 @@
 #include "graph.h"
+#include "map.h"
 
-void Node::getCoordinate()
+#define Neighbor std::pair<std::shared_ptr<Node>, double>
+
+Coordinate Node::getCoordinate()
 {
     return coord;
 }
@@ -10,33 +13,28 @@ void Node::assignId(int setId)
     id = setId;
 }
 
-void Node::addNeighbor(Node neighbor, double distance) {
-    neighbors.push_back(std::make_pair(Node, distance));
+void Node::addNeighbor(Node neighbor, double distance)
+{
+    neighbors.push_back(std::make_pair(std::make_shared<Node>(neighbor), distance));
 }
 
-std::vector<Node> Node::getNeighbors()
+std::vector<Neighbor> Node::getNeighbors()
 {
-    std::vector<Node> neighborNodes;
-
-    int i;
-    for (i = 0; i < neighbors.size(); i++) {
-        neighborNodes.push_back(neighbors[i].first);
-    }
-
-    return neighborNodes;
+    return neighbors;
 }
 
 void Graph::addNode(Node node)
 {
-    const Coordinate coord = node.getCoordinate();
+    Coordinate coord = node.getCoordinate();
     node.assignId(iota++);
 
     int i;
     for (i = 0; i < nodes.size(); i++) {
         const Coordinate targetCoord = nodes[i].getCoordinate();
-        if (coord.distanceTo(targetCoord) < 30 && grid.checkCollision(coord, targetCoord)) // TODO set constant
+	const double distance = coord.distanceTo(targetCoord, grid.getResolution());
+	if (distance < 30 && grid.checkCollision(coord, targetCoord)) // TODO set constant
         {
-            addVertex(node, nodes[i]);
+            addVertex(node, nodes[i], distance);
         }
     }
 

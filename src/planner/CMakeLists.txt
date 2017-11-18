@@ -18,6 +18,8 @@ find_package(catkin REQUIRED COMPONENTS
 # Add other local cpp files here
 set(SOURCES
   src/pose.cpp
+  src/map.cpp
+  src/graph.cpp
 )
 
 include_directories(

@@ -1,6 +1,8 @@
 #include "map.h"
 #include "nav_msgs/OccupancyGrid.h"
 
+#define sign(x) ((x > 0) ? 1 : ((x < 0) ? -1 : 0))
+
 double Coordinate::distanceTo(Coordinate target)
 {
     int dx = abs(x - target.x);
@@ -17,12 +19,9 @@ double Coordinate::distanceTo(Coordinate target, double resolution)
     return sqrt(pow(dx, 2) + pow(dy, 2));
 }
 
-Grid::Grid(int width, int height, float r, std::vector<signed char> g)
+float Grid::getResolution()
 {
-    width = w;
-    height = h;
-    resolution = r;
-    grid = g;
+    return resolution;
 }
 
 Coordinate Grid::getRandomCoordinate()
@@ -114,7 +113,7 @@ std::vector<Coordinate> Grid::bresenham(Coordinate from, Coordinate to) {
     return lineCoordinates;
 }
 
-Grid MapHandler::getGrid()
+Grid MapHandler::getGrid() const
 {
     return grid;
 }

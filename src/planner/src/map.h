@@ -1,8 +1,6 @@
 #pragma once
 
-#include <math.h>
-#include <gazebo_msgs/ModelStates.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <nav_msgs/OccupancyGrid.h>
 
 struct Coordinate
 {
@@ -14,20 +12,23 @@ struct Coordinate
         y = setY;
     };
 
-    int distanceTo(Coordinate target);
+    double distanceTo(Coordinate target);
     double distanceTo(Coordinate target, double resolution);
-}
+};
 
 class Grid
 {
 public:
-    Grid(int w, int h, float r, std::vector<signed char> g);
+    Grid() = default;
+    virtual ~Grid() = default;
+    Grid(int width, int height, float resolution, std::vector<signed char, std::allocator<signed char>> grid);
     Coordinate getRandomCoordinate();
     bool checkOccupancy(Coordinate coord);
     bool checkCollision(Coordinate from, Coordinate to);
+    float getResolution();
 
 private:
-    std::vector<signed char> grid;
+    std::vector<signed char, std::allocator<signed char>> grid;
     int width;
     int height;
     float resolution;
