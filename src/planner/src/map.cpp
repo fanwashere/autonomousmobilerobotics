@@ -1,6 +1,22 @@
 #include "map.h"
 #include "nav_msgs/OccupancyGrid.h"
 
+double Coordinate::distanceTo(Coordinate target)
+{
+    int dx = abs(x - target.x);
+    int dy = abs(y - target.y);
+
+    return sqrt(pow(dx, 2) + pow(dy, 2));
+}
+
+double Coordinate::distanceTo(Coordinate target, double resolution)
+{
+    int dx = abs(x - target.x) * resolution;
+    int dy = abs(y - target.y) * resolution;
+
+    return sqrt(pow(dx, 2) + pow(dy, 2));
+}
+
 Grid::Grid(int width, int height, float r, std::vector<signed char> g)
 {
     width = w;
@@ -46,13 +62,6 @@ bool Grid::checkCollision(Coordinate from, Coordinate to)
     }
 
     return false;
-}
-
-double Grid::getDistance(Coordinate from, Coordinate to) {
-    int dx = abs(from.x - to.x) * resolution;
-    int dy = abs(from.y - to.y) * resolution;
-
-    return sqrt(pow(dx, 2) + pow(dy, 2));
 }
 
 std::vector<Coordinate> Grid::bresenham(Coordinate from, Coordinate to) {

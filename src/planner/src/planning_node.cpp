@@ -1,12 +1,13 @@
 #include <ros/ros.h>
 #include "pose.h"
 #include "map.h"
+#include "graph.h"
 #include "nav_msgs/OccupancyGrid.h"
 
 namespace
 {
     const std::string NODE_NAME = "planner";
-    const double RATE = 40.0;
+    const double RATE = 1.0;
     const int NUM_NODES = 100;
     const double MAX_NODE_DISTANCE = 10.0;
 
@@ -37,31 +38,49 @@ int main(int argc, char **argv)
     auto mapSubscriber = n.subscribe("/map", 1, mapCallback);
     ROS_INFO("Subscribed to /map topic");
 
-    ros::Rate loop_rate(RATE);
+    /*
+    ros::ServiceServer service = n.advertiseService("plan", plan);
+    ROS_INFO("Planning server online");
+    ros::spin();
+    */
 
-    while (ros::ok())
-    {
-        Grid grid = MapHandler.getGrid();
+    Grid grid = MapHandler.getGrid();
+    Graph graph(grid);
 
-        int i;
-        for (i = 0; i < NUM_NODES; i++) {
-            Coordinate coord = grid.getRandomCoordinate();
-            std::vector<Node> nodes = graph.getNodes();
+    int i;
+    for (i = 0; i < NUM_NODES; i++) {
+        Coordinate coord = grid.getRandomCoordinate();
+        Node node(coord);
 
-            int j;
-            for (j = 0; j < nodes.size(); j++) {
-                Node node = nodes[j];
+        int j;
+        for (j = 0; j < nodes.size(); j++) {
+            Coordinate targetCoord = nodes[j].getCoordinate();
+            double distance = coord.distanceTo(targetCoord);
 
-                if (grid.getDistance(coord, node.coordinate) > MAX_NODE_DISTANCE || grid.checkCollision(coord, node.coordinate)) {
-                    continue;
-                }
-
-                // Make connection between existing node and new node.
+            if (distance > MAX_NODE_DISTANCE || grid.checkCollision(coord, targetCoord))
+            {
+                continue;
             }
+
+            node.addNeighbor(nodes[j], distance);
+            nodes[j].addNeighbor(node, distance);
         }
 
-        loop_rate.sleep();
-    	ros::spinOnce();
+        graph.addNode(node);
+    }
+
+    /*
+    Pose pose = poseHandler.getPose();
+    Coordinate initCoord(pose.x, pose.y);
+    Node initNode(initCoord);
+    */
+
+    ros::Rate rate(RATE);
+
+    while(ros::ok())
+    {
+        ros::spinOnce();
+        rate.sleep();
     }
 
     return 0;

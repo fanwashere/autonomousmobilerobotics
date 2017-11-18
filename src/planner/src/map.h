@@ -12,7 +12,10 @@ struct Coordinate
     Coordinate(int setX, int setY) {
         x = setX;
         y = setY;
-    }
+    };
+
+    int distanceTo(Coordinate target);
+    double distanceTo(Coordinate target, double resolution);
 }
 
 class Grid
@@ -22,7 +25,6 @@ public:
     Coordinate getRandomCoordinate();
     bool checkOccupancy(Coordinate coord);
     bool checkCollision(Coordinate from, Coordinate to);
-    double getDistance(Coordinate from, Coordinate to);
 
 private:
     std::vector<signed char> grid;
