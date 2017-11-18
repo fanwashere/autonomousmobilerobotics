@@ -11,14 +11,14 @@ Node::Node(const Coordinate &c) {
     coord = c;
 }
 
-void Node::addNeighbor(Node neighbor, double distance)
+void Node::addEdge(std::shared_ptr<Edge> edge)
 {
-    neighbors.push_back(std::make_pair(std::make_shared<Node>(neighbor), distance));
+    edges.push_back(edge);
 }
 
-std::vector<Neighbor> Node::getNeighbors() const
+std::vector<std::shared_ptr<Edge>> Node::getEdges() const
 {
-    return neighbors;
+    return edges;
 }
 
 Coordinate Node::getCoordinate() const
@@ -31,6 +31,13 @@ void Node::assignId(int setId)
     id = setId;
 }
 
+Edge::Edge(std::shared_ptr<Node> setN1, std::shared_ptr<Node> setN2, double setWeight)
+{
+    n1 = setN1;
+    n2 = setN2;
+    weight = setWeight;
+}
+
 Graph::Graph(const Grid &g)
 {
     grid = g;
@@ -40,22 +47,25 @@ void Graph::addNode(Node &node)
 {
     Coordinate coord = node.getCoordinate();
     node.assignId(iota++);
+    std::shared_ptr<Node> nodePtr = std::make_shared<Node>(node);
 
     int i;
     for (i = 0; i < nodes.size(); i++) {
         const Coordinate targetCoord = nodes[i]->getCoordinate();
-	    const double distance = coord.distanceTo(targetCoord, grid.getResolution());
-	    if (distance < NEIGHBOR_MAX_DISTANCE && grid.checkCollision(coord, targetCoord))
+	const double distance = coord.distanceTo(targetCoord, grid.getResolution());
+	if (distance < NEIGHBOR_MAX_DISTANCE && grid.checkCollision(coord, targetCoord))
         {
-            addVertex(node, *nodes[i], distance);
+            addVertex(nodePtr, nodes[i], distance);
         }
     }
 
-    nodes.push_back(std::make_shared<Node>(node));
+    nodes.push_back(nodePtr);
 }
 
-void Graph::addVertex(Node n1, Node n2, double weight)
+void Graph::addVertex(std::shared_ptr<Node> n1, std::shared_ptr<Node> n2, double weight)
 {
-    n1.addNeighbor(n2, weight);
-    n2.addNeighbor(n1, weight);
+    Edge edge(n1, n2, weight);
+    std::shared_ptr<Edge> edgePtr = std::make_shared<Edge>(edge);
+    n1->addEdge(edgePtr);
+    n2->addEdge(edgePtr);
 }
