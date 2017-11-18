@@ -3,6 +3,12 @@
 
 #define sign(x) ((x > 0) ? 1 : ((x < 0) ? -1 : 0))
 
+Coordinate::Coordinate(int setX, int setY)
+{
+    x = setX;
+    y = setY;
+}
+
 double Coordinate::distanceTo(Coordinate target)
 {
     int dx = abs(x - target.x);
