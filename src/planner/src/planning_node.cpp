@@ -55,6 +55,11 @@ int main(int argc, char **argv)
         graph.addNode(node);
     }
 
+
+    Coordinate start(0, 0);
+    Coordinate end(10, 10);
+    std::vector<Coordinate> path = graph.findShortestPath(start, end);
+
     /*
     Pose pose = poseHandler.getPose();
     Coordinate initCoord(pose.x, pose.y);
