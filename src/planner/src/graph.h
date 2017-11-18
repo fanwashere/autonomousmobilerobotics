@@ -10,8 +10,8 @@ public:
     Node(const Coordinate &coord);
 
     void addNeighbor(Node neighbor, double distance);
-    std::vector<Neighbor> getNeighbors();
-    Coordinate getCoordinate();
+    std::vector<Neighbor> getNeighbors() const;
+    Coordinate getCoordinate() const;
     void assignId(int id);
 
 private:
@@ -25,7 +25,7 @@ class Graph
 public:
     Graph(const Grid &grid);
 
-    void addNode(const Node &node);
+    void addNode(Node &node);
 
 private:
     std::vector<std::shared_ptr<Node>> nodes;

@@ -2,7 +2,7 @@
 #include "nav_msgs/OccupancyGrid.h"
 
 namespace {
-    constexpr int sign(x) { return ((x > 0) ? 1 : ((x < 0) ? -1 : 0)); }
+    constexpr int sign(int x) { return ((x > 0) ? 1 : ((x < 0) ? -1 : 0)); }
 }
 
 Coordinate::Coordinate(int setX, int setY)
@@ -53,7 +53,7 @@ bool Grid::checkOccupancy(const Coordinate &coord)
     return grid[index]; // TODO Differentiate occupied or not
 }
 
-bool Grid::checkCollision(Coordinate from, Coordinate to)
+bool Grid::checkCollision(const Coordinate &from, const Coordinate &to)
 {
     // Check validity and occupancy of from coordinate
     if (from.x < 0 || from.x >= width || checkOccupancy(from)) {

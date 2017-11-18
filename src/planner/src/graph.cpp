@@ -11,7 +11,7 @@ Node::Node(const Coordinate &c) {
     coord = c;
 }
 
-void Node::addNeighbor(Node neighbor, double distance) const
+void Node::addNeighbor(Node neighbor, double distance)
 {
     neighbors.push_back(std::make_pair(std::make_shared<Node>(neighbor), distance));
 }
@@ -36,18 +36,18 @@ Graph::Graph(const Grid &g)
     grid = g;
 }
 
-void Graph::addNode(const Node &node)
+void Graph::addNode(Node &node)
 {
     Coordinate coord = node.getCoordinate();
     node.assignId(iota++);
 
     int i;
     for (i = 0; i < nodes.size(); i++) {
-        const Coordinate targetCoord = nodes[i].getCoordinate();
+        const Coordinate targetCoord = nodes[i]->getCoordinate();
 	    const double distance = coord.distanceTo(targetCoord, grid.getResolution());
 	    if (distance < NEIGHBOR_MAX_DISTANCE && grid.checkCollision(coord, targetCoord))
         {
-            addVertex(node, nodes[i], distance);
+            addVertex(node, *nodes[i], distance);
         }
     }
 
