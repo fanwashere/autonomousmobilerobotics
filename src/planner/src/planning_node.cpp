@@ -4,8 +4,7 @@
 #include "graph.h"
 #include <nav_msgs/OccupancyGrid.h>
 
-namespace
-{
+namespace {
     const std::string NODE_NAME = "planner";
     const double RATE = 1.0;
     const int NUM_NODES = 100;
@@ -16,8 +15,7 @@ namespace
     using PoseLiveCallback = boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)>;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     ros::init(argc, argv, NODE_NAME);
     ros::NodeHandle n;
 
@@ -45,14 +43,12 @@ int main(int argc, char **argv)
     ros::spin();
     */
 
-    Grid grid = mapHandler.getGrid();
+    std::shared_ptr<Grid> grid = mapHandler.getGrid();
     Graph graph(grid);
 
-    int i;
-    for (i = 0; i < NUM_NODES; i++) {
-        Coordinate coord = grid.getRandomCoordinate();
-        Node node(coord);
-        graph.addNode(node);
+    for (int i = 0; i < NUM_NODES; i++) {
+        Coordinate coord = grid->getRandomCoordinate();
+        graph.addNode(std::make_shared<Node>(coord));
     }
 
 
@@ -68,8 +64,7 @@ int main(int argc, char **argv)
 
     ros::Rate rate(RATE);
 
-    while(ros::ok())
-    {
+    while(ros::ok()) {
         ros::spinOnce();
         rate.sleep();
     }

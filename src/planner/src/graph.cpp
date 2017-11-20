@@ -1,95 +1,89 @@
-#include "graph.h"
 #include "map.h"
+#include "graph.h"
+
 #include <queue>
 
-namespace
-{
-    #define NEIGHBOR_MAX_DISTANCE 30.0
-    #define INF 0x3f3f3f3f
-    #define Neighbor std::pair<std::shared_ptr<Node>, double>
+namespace {
+    const double NEIGHBOR_MAX_DISTANCE = 30.0;
+    const uint32_t INF = 0x3f3f3f3f;
 }
 
-Node::Node(const Coordinate &c) {
-    coord = c;
-}
+Node::Node(const Coordinate &c)
+: id(-1)
+, coord(c)
+{}
 
-void Node::addEdge(std::shared_ptr<Node> to, double weight)
-{
-    Edge edge(to, weight);
-    std::shared_ptr<Edge> edgePtr = std::make_shared<Edge>(edge); // Might not need shared_ptr
+void Node::addEdge(std::shared_ptr<Node> to, double weight) {
+    std::shared_ptr<Edge> edgePtr = std::make_shared<Edge>(to, weight);
     edges.push_back(edgePtr);
 }
 
-std::vector<std::shared_ptr<Edge>> Node::getEdges() const
-{
+std::vector<std::shared_ptr<Edge>> Node::getEdges() const {
     return edges;
 }
 
-Coordinate Node::getCoordinate() const
-{
+Coordinate Node::getCoordinate() const {
     return coord;
 }
 
-void Node::assignId(int setId)
-{
+void Node::assignId(int setId) {
     id = setId;
 }
 
-int Node::getId() const
-{
+int Node::getId() const {
     return id;
 }
 
 Edge::Edge(std::shared_ptr<Node> setDestination, double setWeight)
-{
-    destination = setDestination;
-    weight = setWeight;
+: destination(setDestination)
+, weight(setWeight)
+{}
+
+std::shared_ptr<Node> Edge::getDestination() const {
+    return destination;
 }
 
-Graph::Graph(const Grid &g)
-{
-    grid = g;
+double Edge::getWeight() const {
+    return weight;
 }
 
-void Graph::addNode(Node &node)
-{
-    Coordinate coord = node.getCoordinate();
-    node.assignId(iota++);
-    std::shared_ptr<Node> nodePtr = std::make_shared<Node>(node);
+Graph::Graph(std::shared_ptr<Grid> g)
+: iota(0)
+, grid(g)
+{}
 
-    int i;
-    for (i = 0; i < nodes.size(); i++) {
+void Graph::addNode(std::shared_ptr<Node> node) {
+    Coordinate coord = node->getCoordinate();
+    node->assignId(iota++);
+
+    for (int i = 0; i < nodes.size(); i++) {
         const Coordinate targetCoord = nodes[i]->getCoordinate();
-	const double distance = coord.distanceTo(targetCoord, grid.getResolution());
-	if (distance < NEIGHBOR_MAX_DISTANCE && grid.checkCollision(coord, targetCoord))
-        {
-            addVertex(nodePtr, nodes[i], distance);
+        const double distance = coord.distanceTo(targetCoord, grid->getResolution());
+
+        if (distance < NEIGHBOR_MAX_DISTANCE && grid->checkCollision(coord, targetCoord)) {
+            addVertex(node, nodes[i], distance);
         }
     }
 
-    nodes.push_back(nodePtr);
+    nodes.push_back(node);
 }
 
-void Graph::addVertex(std::shared_ptr<Node> n1, std::shared_ptr<Node> n2, double weight)
-{
+void Graph::addVertex(std::shared_ptr<Node> n1, std::shared_ptr<Node> n2, double weight) {
     n1->addEdge(n2, weight);
     n2->addEdge(n1, weight);
 }
 
-std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const Coordinate &end)
-{
+std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const Coordinate &end) {
     std::vector<std::shared_ptr<Node>> prev(nodes.size() + 2); // +2 for start and end node, intentionally init as null
     std::vector<double> dist(nodes.size(), INF);
 
     // Add starting node
-    Node startNode(start);
-    addNode(startNode);
+    addNode(std::make_shared<Node>(start));
     dist.push_back(0); // Init distance 0
     std::shared_ptr<Node> startNodePtr = nodes.back();
 
     // Add ending node
-    Node endNode(end);
-    addNode(endNode);
+    addNode(std::make_shared<Node>(end));
     dist.push_back(INF); // Init distance unknown
     std::shared_ptr<Node> endNodePtr = nodes.back();
 
@@ -115,8 +109,8 @@ std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const C
         int j;
         for (j = 0; j < connections.size(); j++)
         {
-            std::shared_ptr<Node> v = connections[j]->destination;
-            double totalDistance = distance + connections[j]->weight;
+            std::shared_ptr<Node> v = connections[j]->getDestination();
+            double totalDistance = distance + connections[j]->getWeight();
             if (totalDistance < dist[v->getId()])
             {
                 dist[v->getId()] = totalDistance;
@@ -138,12 +132,10 @@ std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const C
     return nodesToCoordinates(path);
 }
 
-std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const std::vector<Coordinate> &waypoints)
-{
+std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const std::vector<Coordinate> &waypoints) {
     std::vector<Coordinate> path;
 
-    int i;
-    for (i = 0; i < waypoints.size(); i++)
+    for (int i = 0; i < waypoints.size(); i++)
     {
         const Coordinate subpathStart = i == 0 ? start : waypoints[i - 1];
         const Coordinate subpathEnd = waypoints[i];
@@ -152,11 +144,10 @@ std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const s
     }
 }
 
-std::vector<Coordinate> Graph::nodesToCoordinates(std::vector<std::shared_ptr<Node>> nodeVector) const
-{
+std::vector<Coordinate> Graph::nodesToCoordinates(std::vector<std::shared_ptr<Node>> nodeVector) const {
     std::vector<Coordinate> coords;
-    int i;
-    for (i = 0; i < nodeVector.size(); i++)
+
+    for (int i = 0; i < nodeVector.size(); i++)
     {
         coords.push_back(nodeVector[i]->getCoordinate());
     }

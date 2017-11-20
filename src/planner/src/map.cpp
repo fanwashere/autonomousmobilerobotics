@@ -1,74 +1,79 @@
 #include "map.h"
-#include "nav_msgs/OccupancyGrid.h"
 
 namespace {
     constexpr int sign(int x) { return ((x > 0) ? 1 : ((x < 0) ? -1 : 0)); }
 }
 
 Coordinate::Coordinate(int setX, int setY)
-{
-    x = setX;
-    y = setY;
+: x(setX)
+, y(setY)
+{}
+
+int Coordinate::getX() const {
+    return x;
 }
 
-double Coordinate::distanceTo(Coordinate target)
-{
-    int dx = abs(x - target.x);
-    int dy = abs(y - target.y);
-
-    return sqrt(pow(dx, 2) + pow(dy, 2));
+int Coordinate::getY() const {
+    return y;
 }
 
-double Coordinate::distanceTo(Coordinate target, double resolution)
-{
-    int dx = abs(x - target.x) * resolution;
-    int dy = abs(y - target.y) * resolution;
+double Coordinate::distanceTo(const Coordinate &target) {
+    return distanceTo(target, 1.0);
+}
+
+double Coordinate::distanceTo(const Coordinate &target, double resolution) {
+    int dx = abs(x - target.getX()) * resolution;
+    int dy = abs(y - target.getY()) * resolution;
 
     return sqrt(pow(dx, 2) + pow(dy, 2));
 }
 
 Grid::Grid(int w, int h, float r, std::vector<int8_t> g)
-{
-    width = w;
-    height = h;
-    resolution = r;
-    grid = g;
-}
+: width(w)
+, height(h)
+, resolution(r)
+, grid(g)
+{}
 
-float Grid::getResolution() const
-{
+float Grid::getResolution() const {
     return resolution;
 }
 
-Coordinate Grid::getRandomCoordinate() const
-{
-    int x = rand() % width;
-    int y = rand() % height;
+Coordinate Grid::getRandomCoordinate() const {
+    const int x = rand() % width;
+    const int y = rand() % height;
+
     return Coordinate(x, y);
 }
 
-bool Grid::checkOccupancy(const Coordinate &coord)
-{
-    int index = coord.y * width + coord.x;
+bool Grid::checkOccupancy(const Coordinate &coord) {
+    const int index = coord.getY() * width + coord.getX();
+
     return grid[index]; // TODO Differentiate occupied or not
 }
 
-bool Grid::checkCollision(const Coordinate &from, const Coordinate &to)
-{
+bool Grid::checkCollision(const Coordinate &from, const Coordinate &to) {
     // Check validity and occupancy of from coordinate
-    if (from.x < 0 || from.x >= width || checkOccupancy(from)) {
+    if (from.getX() < 0 || 
+        from.getX() >= width || 
+        from.getY() < 0 ||
+        from.getY() >= height ||
+        checkOccupancy(from)) {
         return true;
     }
 
     // Check validity and occupancy of to coordinate
-    if (to.x < 0 || to.y >= height || checkOccupancy(to)) {
+    if (to.getX() < 0 ||
+        to.getX() >= width ||
+        to.getY() < 0 ||
+        to.getY() >= height ||
+        checkOccupancy(to)) {
         return true;
     }
 
     std::vector<Coordinate> lineCoordinates = bresenham(from, to);
 
-    int i;
-    for (i = 0; i < lineCoordinates.size(); i++) {
+    for (int i = 0; i < lineCoordinates.size(); i++) {
         Coordinate coord = lineCoordinates[i];
 
         if (checkOccupancy(coord)) {
@@ -80,10 +85,10 @@ bool Grid::checkCollision(const Coordinate &from, const Coordinate &to)
 }
 
 std::vector<Coordinate> Grid::bresenham(const Coordinate &from, const Coordinate &to) {
-    int x0 = from.x;
-    int y0 = from.y;
-    int x1 = to.x;
-    int y1 = to.y;
+    const int x0 = from.getX();
+    const int y0 = from.getY();
+    const int x1 = to.getX();
+    const int y1 = to.getY();
 
     std::vector<Coordinate> lineCoordinates;
     int x = x0;
@@ -92,8 +97,8 @@ std::vector<Coordinate> Grid::bresenham(const Coordinate &from, const Coordinate
     int dx = abs(x1 - x0);
     int dy = abs(y1 - y0);
 
-    int s1 = sign(x1 - x0);
-    int s2 = sign(y1 - y0);
+    const int s1 = sign(x1 - x0);
+    const int s2 = sign(y1 - y0);
 
     int swap = 0;
     if (dy > dx) {
@@ -104,10 +109,8 @@ std::vector<Coordinate> Grid::bresenham(const Coordinate &from, const Coordinate
     }
 
     int D = 2 * dy - dx;
-    int i;
-    for (i = 0; i < dx; i++) {
-        Coordinate coord(x, y);
-        lineCoordinates.push_back(coord);
+    for (int i = 0; i < dx; i++) {
+        lineCoordinates.emplace_back(x, y);
 
         while (D >= 0) {
             D = D - 2 * dx;
@@ -129,12 +132,10 @@ std::vector<Coordinate> Grid::bresenham(const Coordinate &from, const Coordinate
     return lineCoordinates;
 }
 
-Grid MapHandler::getGrid() const
-{
+std::shared_ptr<Grid> MapHandler::getGrid() const {
     return grid;
 }
 
-void MapHandler::callback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
-{
-    grid = Grid(msg->info.width, msg->info.height, msg->info.resolution, msg->data);
+void MapHandler::callback(const nav_msgs::OccupancyGrid::ConstPtr &msg) {
+    grid = std::make_shared<Grid>(msg->info.width, msg->info.height, msg->info.resolution, msg->data);
 }

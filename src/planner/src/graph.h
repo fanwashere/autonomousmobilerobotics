@@ -1,13 +1,13 @@
 #pragma once
 
-#include "map.h"
+class Edge;
+class Coordinate;
+class Grid;
+class MapHandler;
 
-struct Edge;
-
-class Node
-{
+class Node {
 public:
-    Node(const Coordinate &coord);
+    explicit Node(const Coordinate &c);
 
     void addEdge(std::shared_ptr<Node> to, double weight);
     std::vector<std::shared_ptr<Edge>> getEdges() const;
@@ -21,27 +21,31 @@ private:
     int id;
 };
 
-struct Edge
-{
+class Edge {
+public:
+    Edge(std::shared_ptr<Node> destination, double weight);
+
+    std::shared_ptr<Node> getDestination() const;
+    double getWeight() const;
+
+private:
     std::shared_ptr<Node> destination;
     double weight;
-
-    Edge(std::shared_ptr<Node> destination, double weight);
 };
 
 class Graph
 {
 public:
-    Graph(const Grid &grid);
+    Graph(std::shared_ptr<Grid> g);
 
-    void addNode(Node &node);
+    void addNode(std::shared_ptr<Node> node);
     std::vector<Coordinate> findShortestPath(const Coordinate &start, const Coordinate &end);
     std::vector<Coordinate> findShortestPath(const Coordinate &start, const std::vector<Coordinate> &waypoints);
 
 private:
     std::vector<std::shared_ptr<Node>> nodes;
-    Grid grid;
-    int iota = 0;
+    std::shared_ptr<Grid> grid;
+    int iota;
 
     void addVertex(std::shared_ptr<Node> n1, std::shared_ptr<Node> n2, double weight);
     std::vector<Coordinate> nodesToCoordinates(std::vector<std::shared_ptr<Node>> nodeVector) const;

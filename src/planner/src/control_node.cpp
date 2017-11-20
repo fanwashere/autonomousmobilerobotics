@@ -1,8 +1,7 @@
 #include <ros/ros.h>
 #include "pose.h"
 
-namespace
-{
+namespace {
     const std::string NODE_NAME = "controller";
     const double RATE = 40.0;
 
@@ -10,14 +9,12 @@ namespace
     using PoseLiveCallback = boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)>;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     ros::init(argc, argv, NODE_NAME);
 
     ros::Rate loop_rate(RATE);
 
-    while (ros::ok())
-    {
+    while (ros::ok()) {
     	loop_rate.sleep();
     	ros::spinOnce();
     }

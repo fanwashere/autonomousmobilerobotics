@@ -2,24 +2,26 @@
 
 #include <nav_msgs/OccupancyGrid.h>
 
-struct Coordinate
-{
-    int x;
-    int y;
-
+class Coordinate {
+public:
     Coordinate() = default;
     Coordinate(int setX, int setY);
 
-    double distanceTo(Coordinate target);
-    double distanceTo(Coordinate target, double resolution);
+    int getX() const;
+    int getY() const;
+    double distanceTo(const Coordinate &target);
+    double distanceTo(const Coordinate &target, double resolution);
+
+private:
+    int x;
+    int y;
 };
 
-class Grid
-{
+class Grid {
 public:
     Grid() = default;
-    virtual ~Grid() = default;
     Grid(int width, int height, float resolution, std::vector<int8_t> grid);
+    virtual ~Grid() = default;
 
     float getResolution() const;
     Coordinate getRandomCoordinate() const;
@@ -27,23 +29,22 @@ public:
     bool checkCollision(const Coordinate &from, const Coordinate &to);
 
 private:
-    std::vector<int8_t> grid;
+    std::vector<Coordinate> bresenham(const Coordinate &from, const Coordinate &to);
+
     int width;
     int height;
     float resolution;
-
-    std::vector<Coordinate> bresenham(const Coordinate &from, const Coordinate &to);
+    std::vector<int8_t> grid;
 };
 
-class MapHandler
-{
+class MapHandler {
 public:
     MapHandler() = default;
     virtual ~MapHandler() = default;
 
-    Grid getGrid() const;
-    void callback(const nav_msgs::OccupancyGrid::ConstPtr& msg);
+    std::shared_ptr<Grid> getGrid() const;
+    void callback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
 
 private:
-    Grid grid;
+    std::shared_ptr<Grid> grid;
 };
