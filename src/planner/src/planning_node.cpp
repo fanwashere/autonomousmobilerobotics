@@ -9,7 +9,7 @@
 namespace {
     const std::string NODE_NAME = "planner";
     const double RATE = 1.0;
-    const int NUM_NODES = 500;
+    const int NUM_NODES = 200;
 
     using MapCallback = boost::function<void(const nav_msgs::OccupancyGrid::ConstPtr&)>;
     using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
@@ -92,9 +92,9 @@ int main(int argc, char **argv) {
             edgeLine.ns = "nodes";
             edgeLine.id = newNode->getId() * NUM_NODES + destinationNode->getId();
             edgeLine.type = visualization_msgs::Marker::LINE_STRIP;
-            edgeLine.scale.x = 0.1;
+            edgeLine.scale.x = 0.05;
             edgeLine.color.r = 1.0f;
-            edgeLine.color.a = 1.0f;
+            edgeLine.color.a = 0.7f;
 
             geometry_msgs::Point startPoint, endPoint;
             startPoint.x = coord.getX() * grid->getResolution();
