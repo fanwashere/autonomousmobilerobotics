@@ -52,7 +52,11 @@ int main(int argc, char **argv) {
     Graph graph(grid);
 
     for (int i = 0; i < NUM_NODES; i++) {
-        Coordinate coord = grid->getRandomCoordinate();
+        Coordinate coord;
+        do {
+            coord = grid->getRandomCoordinate();
+        } while(grid->checkOccupancy(coord));
+
         std::shared_ptr<Node> newNode = std::make_shared<Node>(coord);
 
         graph.addNode(newNode);
