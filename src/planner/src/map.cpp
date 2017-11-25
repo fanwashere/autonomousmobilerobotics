@@ -1,3 +1,4 @@
+#include <ros/ros.h>
 #include "map.h"
 
 namespace {
@@ -49,7 +50,7 @@ Coordinate Grid::getRandomCoordinate() const {
 bool Grid::checkOccupancy(const Coordinate &coord) {
     const int index = coord.getY() * width + coord.getX();
 
-    return grid[index]; // TODO Differentiate occupied or not
+    return grid[index] == 100; // TODO Differentiate occupied or not
 }
 
 bool Grid::checkCollision(const Coordinate &from, const Coordinate &to) {
@@ -132,10 +133,16 @@ std::vector<Coordinate> Grid::bresenham(const Coordinate &from, const Coordinate
     return lineCoordinates;
 }
 
+bool MapHandler::hasData() const {
+    return receivedData;
+}
+
 std::shared_ptr<Grid> MapHandler::getGrid() const {
     return grid;
 }
 
 void MapHandler::callback(const nav_msgs::OccupancyGrid::ConstPtr &msg) {
+    ROS_INFO("Map recieved [w: %d, h: %d, r: %f]", msg->info.width, msg->info.height, msg->info.resolution);
+    receivedData = true;
     grid = std::make_shared<Grid>(msg->info.width, msg->info.height, msg->info.resolution, msg->data);
 }

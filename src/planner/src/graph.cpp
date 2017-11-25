@@ -4,7 +4,7 @@
 #include <queue>
 
 namespace {
-    const double NEIGHBOR_MAX_DISTANCE = 30.0;
+    const double NEIGHBOR_MAX_DISTANCE = 2.0;
     const uint32_t INF = 0x3f3f3f3f;
 }
 
@@ -60,7 +60,7 @@ void Graph::addNode(std::shared_ptr<Node> node) {
         const Coordinate targetCoord = nodes[i]->getCoordinate();
         const double distance = coord.distanceTo(targetCoord, grid->getResolution());
 
-        if (distance < NEIGHBOR_MAX_DISTANCE && grid->checkCollision(coord, targetCoord)) {
+        if (distance < NEIGHBOR_MAX_DISTANCE && !grid->checkCollision(coord, targetCoord)) {
             addVertex(node, nodes[i], distance);
         }
     }

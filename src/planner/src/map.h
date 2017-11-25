@@ -42,9 +42,11 @@ public:
     MapHandler() = default;
     virtual ~MapHandler() = default;
 
+    bool hasData() const;
     std::shared_ptr<Grid> getGrid() const;
     void callback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
 
 private:
+    bool receivedData = false;
     std::shared_ptr<Grid> grid;
 };
