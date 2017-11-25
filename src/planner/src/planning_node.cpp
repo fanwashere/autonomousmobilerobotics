@@ -9,7 +9,7 @@
 namespace {
     const std::string NODE_NAME = "planner";
     const double RATE = 1.0;
-    const int NUM_NODES = 100;
+    const int NUM_NODES = 500;
 
     using MapCallback = boost::function<void(const nav_msgs::OccupancyGrid::ConstPtr&)>;
     using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
@@ -49,6 +49,7 @@ int main(int argc, char **argv) {
     }
 
     std::shared_ptr<Grid> grid = mapHandler.getGrid();
+    grid->padObstacles(2);
     Graph graph(grid);
 
     for (int i = 0; i < NUM_NODES; i++) {

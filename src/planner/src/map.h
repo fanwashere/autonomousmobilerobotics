@@ -27,8 +27,11 @@ public:
     Coordinate getRandomCoordinate() const;
     bool checkOccupancy(const Coordinate &coord);
     bool checkCollision(const Coordinate &from, const Coordinate &to);
+    void padObstacles(const int radius);
 
 private:
+    int getCell(const Coordinate &coord);
+    void updateCell(const Coordinate &coord, const int p);
     std::vector<Coordinate> bresenham(const Coordinate &from, const Coordinate &to);
 
     int width;

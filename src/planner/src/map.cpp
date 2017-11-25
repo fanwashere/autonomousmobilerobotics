@@ -2,6 +2,8 @@
 #include "map.h"
 
 namespace {
+    const int OBSTACLE_PROBABILITY = 100;
+    const int OBSTACLE_PADDING_PROBABILITY = 80;
     constexpr int sign(int x) { return ((x > 0) ? 1 : ((x < 0) ? -1 : 0)); }
 }
 
@@ -50,7 +52,7 @@ Coordinate Grid::getRandomCoordinate() const {
 bool Grid::checkOccupancy(const Coordinate &coord) {
     const int index = coord.getY() * width + coord.getX();
 
-    return grid[index] == 100; // TODO Differentiate occupied or not
+    return grid[index] >= OBSTACLE_PADDING_PROBABILITY;
 }
 
 bool Grid::checkCollision(const Coordinate &from, const Coordinate &to) {
@@ -83,6 +85,27 @@ bool Grid::checkCollision(const Coordinate &from, const Coordinate &to) {
     }
 
     return false;
+}
+
+void Grid::padObstacles(const int radius) {
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+            Coordinate coord(x, y);
+
+            if (getCell(coord) < OBSTACLE_PROBABILITY) {
+                continue;
+            }
+
+            for (int kx = std::max(x - radius, 0); kx <= std::min(x + radius, width - 1); kx++) {
+                for (int ky = std::max(y - radius, 0); ky <= std::min(y + radius, height - 1); ky++) {
+                    Coordinate k(kx, ky);
+                    if (getCell(k) < OBSTACLE_PROBABILITY) {
+                        updateCell(k, OBSTACLE_PADDING_PROBABILITY);
+                    }
+                }
+            }
+        }
+    }
 }
 
 std::vector<Coordinate> Grid::bresenham(const Coordinate &from, const Coordinate &to) {
@@ -131,6 +154,18 @@ std::vector<Coordinate> Grid::bresenham(const Coordinate &from, const Coordinate
     }
 
     return lineCoordinates;
+}
+
+int Grid::getCell(const Coordinate &coord) {
+    const int index = coord.getY() * width + coord.getX();
+
+    return grid[index];
+}
+
+void Grid::updateCell(const Coordinate &coord, const int p) {
+    const int index = coord.getY() * width + coord.getX();
+
+    grid[index] = p;
 }
 
 bool MapHandler::hasData() const {
