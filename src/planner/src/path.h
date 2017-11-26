@@ -35,9 +35,11 @@ public:
     PathHandler() = default;
     virtual ~PathHandler() = default;
 
+    bool hasPath() const;
+    std::shared_ptr<Path> getPath() const;
     void callback(const nav_msgs::Path::ConstPtr &msg);
 
 private:
     bool receivedPath = false;
-    //std::shared_ptr<
+    std::shared_ptr<Path> path;
 };

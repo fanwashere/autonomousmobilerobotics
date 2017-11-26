@@ -23,8 +23,22 @@ Path::Path(nav_msgs::Path setPath) {
     std::vector<Node> path;
 
     for (int i = 0 ; i < totalNodes; ++i) {
+        ROS_INFO("Coordinates [%f, %f]", nodes[i].pose.position.x, nodes[i].pose.position.y);
         path.push_back(Node(nodes[i].pose.position));
     }
 }
 
+bool PathHandler::hasPath() const {
+    return receivedPath;
+}
+
+std::shared_ptr<Path> PathHandler::getPath() const {
+    return path;
+}
+
+void PathHandler::callback(const nav_msgs::Path::ConstPtr &msg) {
+    ROS_INFO("PATH RECEIVED");
+    receivedPath = true;
+    path = std::make_shared<Path>(*msg);
+}
 

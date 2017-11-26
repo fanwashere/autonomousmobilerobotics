@@ -113,7 +113,23 @@ int main(int argc, char **argv) {
     // WRITE A FUNCTION TO GO FROM COORDINATE PATH -> NAV MSGS PATH
 
     // Control node publisher
-    ros::Publisher controlPub = n.advertise<nav_msgs::Path>("path", 100);
+    ros::Publisher controlPub = n.advertise<nav_msgs::Path>("/path", 100);
+    nav_msgs::Path path;
+
+    // -- This section is for testing the robot -- /
+    geometry_msgs::Point p1, p2, p3;
+
+    p1.x = 0; p1.y = 0;
+    p2.x = 3; p2.y = 4;
+    p3.x = 8; p3.y = 2;
+
+    path.poses[0].pose.position = p1;
+    path.poses[1].pose.position = p2;
+    path.poses[2].pose.position = p3;
+
+    controlPub.publish(path);
+
+    // -- End of Test Section -- /
     
     // std::vector<geometry_msgs::Point> path;
     //Coordinate start(0, 0);
