@@ -5,6 +5,7 @@ namespace {
     const std::string NODE_NAME = "controller";
     const double RATE = 40.0;
 
+    
     using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
     using PoseLiveCallback = boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)>;
 }

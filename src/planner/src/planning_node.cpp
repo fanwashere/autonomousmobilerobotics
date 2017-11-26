@@ -3,6 +3,7 @@
 #include "map.h"
 #include "graph.h"
 #include <geometry_msgs/Point.h>
+#include <nav_msgs/Path.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <visualization_msgs/Marker.h>
 
@@ -109,6 +110,12 @@ int main(int argc, char **argv) {
         }
     }
 
+    // WRITE A FUNCTION TO GO FROM COORDINATE PATH -> NAV MSGS PATH
+
+    // Control node publisher
+    ros::Publisher controlPub = n.advertise<nav_msgs::Path>("path", 100);
+    
+    // std::vector<geometry_msgs::Point> path;
     //Coordinate start(0, 0);
     //Coordinate end(10, 10);
     //std::vector<Coordinate> path = graph.findShortestPath(start, end);
