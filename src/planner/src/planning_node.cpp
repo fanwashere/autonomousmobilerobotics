@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
 
     // Control node publisher
     ROS_INFO("ADVERTISING TO path");
-    ros::Publisher controlPub = n.advertise<nav_msgs::Path>("path", 10);
+    ros::Publisher controlPub = n.advertise<nav_msgs::Path>("/path", 10);
     nav_msgs::Path path;
 
     // -- This section is for testing the robot -- /
@@ -88,10 +88,6 @@ int main(int argc, char **argv) {
     a2.pose.position = p2;
     a3.pose.position = p3;
 
-    // geometry_msgs::PoseStamped p [] = {
-    //     a1, a2, a3    
-    // };
-
     std::vector<geometry_msgs::PoseStamped> p;
     p.push_back(a1);
     p.push_back(a2);
@@ -99,7 +95,7 @@ int main(int argc, char **argv) {
 
     path.poses = p;
 
-    controlPub.publish(path);
+    // controlPub.publish(path);
 
     // -- End of Test Section -- /
     
@@ -117,6 +113,8 @@ int main(int argc, char **argv) {
     ros::Rate rate(RATE);
 
     while(ros::ok()) {
+        controlPub.publish(path);
+        
         ros::spinOnce();
         rate.sleep();
     }

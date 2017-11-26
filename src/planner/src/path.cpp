@@ -16,8 +16,8 @@ void Node::markAsVisited() {
 }
 
 Path::Path(nav_msgs::Path setPath) {
-    ROS_INFO("GENERAtINg PaThs");
-    
+    ROS_INFO("GENERATING PATHS");
+
     auto nodes = setPath.poses;
     totalNodes = nodes.size();
     nodesVisited = 0;
@@ -26,7 +26,8 @@ Path::Path(nav_msgs::Path setPath) {
 
     for (int i = 0 ; i < totalNodes; ++i) {
         ROS_INFO("Coordinates [%f, %f]", nodes[i].pose.position.x, nodes[i].pose.position.y);
-        path.push_back(Node(nodes[i].pose.position));
+
+        // path.push_back(Node(nodes[i].pose.position));
     }
 }
 
@@ -39,8 +40,9 @@ std::shared_ptr<Path> PathHandler::getPath() const {
 }
 
 void PathHandler::callback(const nav_msgs::Path::ConstPtr &msg) {
-    ROS_INFO("PATH RECEIVED");
-    receivedPath = true;
-    path = std::make_shared<Path>(*msg);
+    if (!receivedPath) {
+        receivedPath = true;
+        path = std::make_shared<Path>(*msg);
+    }
 }
 

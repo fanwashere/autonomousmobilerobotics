@@ -34,14 +34,21 @@ int main(int argc, char **argv) {
 
     PathHandler pathHandler;
     PathCallback pathCallback = boost::bind(&PathHandler::callback, &pathHandler, _1);
-    auto pathSubscriber = n.subscribe("path", 1, pathCallback);
-    ROS_INFO("Subscribed to path topic");
+    auto pathSubscriber = n.subscribe("/path", 1, pathCallback);
+    ROS_INFO("Subscribed to /path topic");
 
     ros::Rate loop_rate(RATE);
+
+    // Wait for path to become available.
+    while(ros::ok() && !pathHandler.hasPath()) {
+        ROS_INFO("Waiting on map data, sleeping for 500ms...");
+        ros::spinOnce();
+        ros::Duration(0.5).sleep();
+    }
     
     while (ros::ok()) {
     	loop_rate.sleep();
-    	ros::spinOnce();
+        ros::spinOnce();
     }
 
     return 0;
