@@ -66,6 +66,7 @@ void Graph::addNode(std::shared_ptr<Node> node) {
         const double distance = coord.distanceTo(targetCoord, grid->getResolution());
 
         if (distance < NEIGHBOR_MAX_DISTANCE && !grid->checkCollision(coord, targetCoord)) {
+            ROS_INFO("[Add Node] Distance to: %f", distance);
             addVertex(node, nodes[i], distance);
         }
     }
@@ -113,7 +114,7 @@ std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const C
         inQueue[u->getId()] = false;
 
 	ROS_INFO("[Dijkstra] Dequeued one item from priority queue, now size %d.", (int)pq.size());
-
+        ROS_INFO("[Dijkstra] Priority queue item priority: %f", distance);
         if (u->getId() == endNodePtr->getId())
         {
             ROS_INFO("[Dijkstra] End node found, exiting algorithm.");

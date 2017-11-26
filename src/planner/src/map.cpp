@@ -25,8 +25,8 @@ double Coordinate::distanceTo(const Coordinate &target) {
 }
 
 double Coordinate::distanceTo(const Coordinate &target, double resolution) {
-    int dx = abs(x - target.getX()) * resolution;
-    int dy = abs(y - target.getY()) * resolution;
+    double dx = abs(x - target.getX()) * resolution;
+    double dy = abs(y - target.getY()) * resolution;
 
     return sqrt(pow(dx, 2) + pow(dy, 2));
 }
