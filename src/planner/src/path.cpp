@@ -5,14 +5,26 @@ namespace {
 
 }
 
-Node::Node(geometry_msgs::Point setCoordinates)
-: x(setCoordinates.x)
-, y(setCoordinates.y)
+Node::Node(float setX, float setY)
+: x(setX)
+, y(setY)
 , visited(false)
 {}
 
 void Node::markAsVisited() {
     this->visited = true;
+}
+
+float Node::getX() const {
+    return this->x;
+}
+
+float Node::getY() const {
+    return this->y;
+}
+
+bool Node::isVisited() const {
+    return this->visited;
 }
 
 Path::Path(nav_msgs::Path setPath) {
@@ -25,10 +37,11 @@ Path::Path(nav_msgs::Path setPath) {
     std::vector<Node> path;
 
     for (int i = 0 ; i < totalNodes; ++i) {
-        ROS_INFO("Coordinates [%f, %f]", nodes[i].pose.position.x, nodes[i].pose.position.y);
-
-        // path.push_back(Node(nodes[i].pose.position));
+        auto cd = Node(nodes[i].pose.position.x, nodes[i].pose.position.y);
+        path.push_back(cd);
     }
+    
+    ROS_INFO("SIZE OF COORDINATES : %lu", path.size());
 }
 
 bool PathHandler::hasPath() const {

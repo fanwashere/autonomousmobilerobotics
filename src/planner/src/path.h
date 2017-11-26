@@ -7,10 +7,12 @@
 class Node {
 public:
     Node() = default;
-    Node(geometry_msgs::Point setCoordinates);
-    virtual ~Node() = default;
+    Node(float setX, float setY);
     
     void markAsVisited();
+    bool isVisited() const;
+    float getX() const;
+    float getY() const;
 
 private:
     float x;

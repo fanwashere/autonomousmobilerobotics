@@ -41,10 +41,13 @@ int main(int argc, char **argv) {
 
     // Wait for path to become available.
     while(ros::ok() && !pathHandler.hasPath()) {
-        ROS_INFO("Waiting on map data, sleeping for 500ms...");
+        ROS_INFO("Waiting on path data, sleeping for 1s...");
         ros::spinOnce();
-        ros::Duration(0.5).sleep();
+        ros::Duration(1).sleep();
     }
+    
+    // Get the entire shortest path to traverse
+    std::shared_ptr<Path> path = pathHandler.getPath();
     
     while (ros::ok()) {
     	loop_rate.sleep();
