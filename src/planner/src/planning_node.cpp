@@ -109,9 +109,67 @@ int main(int argc, char **argv) {
         }
     }
 
-    //Coordinate start(0, 0);
-    //Coordinate end(10, 10);
-    //std::vector<Coordinate> path = graph.findShortestPath(start, end);
+    /* Test Dijkstra */
+    Coordinate start(5, 5);
+    visualization_msgs::Marker startMarker;
+    startMarker.header.frame_id = "/map";
+    startMarker.header.stamp = ros::Time::now();
+    startMarker.ns = "nodes";
+    startMarker.id = 999999;
+    startMarker.type = visualization_msgs::Marker::SPHERE;
+    startMarker.pose.position.x = start.getX() * grid->getResolution();
+    startMarker.pose.position.y = start.getY() * grid->getResolution();
+    startMarker.pose.position.z = 0;
+    startMarker.scale.x = 0.3;
+    startMarker.scale.y = 0.3;
+    startMarker.scale.z = 0.3;
+    startMarker.color.b = 1.0f;
+    startMarker.color.a = 1.0f;
+    nodePublisher.publish(startMarker);
+
+    Coordinate end(95, 95);
+    visualization_msgs::Marker endMarker;
+    endMarker.header.frame_id = "/map";
+    endMarker.header.stamp = ros::Time::now();
+    endMarker.ns = "nodes";
+    endMarker.id = 9999999;
+    endMarker.type = visualization_msgs::Marker::SPHERE;
+    endMarker.pose.position.x = end.getX() * grid->getResolution();
+    endMarker.pose.position.y = end.getY() * grid->getResolution();
+    endMarker.pose.position.z = 0;
+    endMarker.scale.x = 0.3;
+    endMarker.scale.y = 0.3;
+    endMarker.scale.z = 0.3;
+    endMarker.color.b = 1.0f;
+    endMarker.color.a = 1.0f;
+    nodePublisher.publish(endMarker);
+
+    ROS_INFO("Testing Dijkstra routing from [%d %d] to [%d %d].", start.getX(), start.getY(), end.getX(), end.getY());
+    std::vector<Coordinate> path = graph.findShortestPath(start, end);
+    ROS_INFO("Dijkstra yielded path with %d nodes.", (int)path.size());
+
+    visualization_msgs::Marker pathLine;
+    pathLine.header.frame_id = "/map";
+    pathLine.header.stamp = ros::Time::now();
+    pathLine.ns = "nodes";
+    pathLine.id = 12345123;
+    pathLine.type = visualization_msgs::Marker::LINE_LIST;
+    pathLine.scale.x = 0.1;
+    pathLine.color.b = 1.0f;
+    pathLine.color.a = 1.0f;
+    for (int i = 1; i < path.size(); i++) {
+        ROS_INFO("Path node [%d %d]", path[i].getX(), path[i].getY());
+        geometry_msgs::Point p0;
+        p0.x = path[i - 1].getX() * grid->getResolution();
+        p0.y = path[i - 1].getY() * grid->getResolution();
+        pathLine.points.push_back(p0);
+
+        geometry_msgs::Point p1;
+        p1.x = path[i].getX() * grid->getResolution();
+        p1.y = path[i].getY() * grid->getResolution();
+        pathLine.points.push_back(p1);
+    }
+    nodePublisher.publish(pathLine);
 
     /*
     Pose pose = poseHandler.getPose();
