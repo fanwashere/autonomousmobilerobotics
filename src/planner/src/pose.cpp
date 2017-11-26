@@ -7,6 +7,7 @@ Pose PoseHandler::getPose() const {
 }
 
 void PoseHandlerLive::callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg) {
+    // Maybe add noise?
     pose.x = msg->pose.pose.position.x;
     pose.y = msg->pose.pose.position.y;
     pose.yaw = tf::getYaw(msg->pose.pose.orientation);
