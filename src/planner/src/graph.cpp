@@ -66,7 +66,6 @@ void Graph::addNode(std::shared_ptr<Node> node) {
         const double distance = coord.distanceTo(targetCoord, grid->getResolution());
 
         if (distance < NEIGHBOR_MAX_DISTANCE && !grid->checkCollision(coord, targetCoord)) {
-            ROS_INFO("[Add Node] Distance to: %f", distance);
             addVertex(node, nodes[i], distance);
         }
     }
@@ -88,22 +87,19 @@ std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const C
     addNode(std::make_shared<Node>(start));
     dist.push_back(0); // Init distance 0
     std::shared_ptr<Node> startNodePtr = nodes.back();
-    ROS_INFO("[Dijkstra] Inserted start node.");
 
     // Add ending node
     addNode(std::make_shared<Node>(end));
     dist.push_back(INF); // Init distance unknown
     std::shared_ptr<Node> endNodePtr = nodes.back();
-    ROS_INFO("[Dijkstra] Inserted end node.");
 
     // Create priority queue
     auto cmp = [](std::pair<std::shared_ptr<Node>, double> n1, std::pair<std::shared_ptr<Node>, double> n2) { ROS_INFO("Cmp %f %f choosing %d", n1.second, n2.second, n1.second < n2.second ? 1 : 2); return n1.second < n2.second; };
     std::priority_queue<std::pair<std::shared_ptr<Node>, double>, std::vector<std::pair<std::shared_ptr<Node>, double>>, Compare> pq;
-    ROS_INFO("[Dijkstra] Created priority queue.");
 
+    // Insert starting node
     pq.push(std::pair<std::shared_ptr<Node>, double>(startNodePtr, 0.0));
     inQueue[startNodePtr->getId()] = true;
-    ROS_INFO("[Dijkstra] Inserted start node into priority queue, now size %d.", (int)pq.size());
 
     while (!pq.empty())
     {
@@ -113,16 +109,14 @@ std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const C
         pq.pop();
         inQueue[u->getId()] = false;
 
-	ROS_INFO("[Dijkstra] Dequeued one item from priority queue, now size %d.", (int)pq.size());
-        ROS_INFO("[Dijkstra] Priority queue item priority: %f", distance);
+	ROS_INFO("[Dijkstra] Traversed distance %f", distance);
         if (u->getId() == endNodePtr->getId())
         {
             ROS_INFO("[Dijkstra] End node found, exiting algorithm.");
-            //break;
+            break;
         }
 
         std::vector<std::shared_ptr<Edge>> connections = u->getEdges();
-        int enqueuedCount = 0;
         for (int j = 0; j < connections.size(); j++)
         {
             std::shared_ptr<Node> v = connections[j]->getDestination();
@@ -133,18 +127,16 @@ std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const C
                 prev[v->getId()] = u;
                 if (!inQueue[v->getId()]) {
                     pq.push(std::pair<std::shared_ptr<Node>, double>(v, totalDistance));
-                    enqueuedCount++;
                     inQueue[v->getId()] = true;
                 }
             }
         }
-        ROS_INFO("[Dijkstra] For current node, %d connections found, %d re-enqueued.", (int)connections.size(), enqueuedCount);
     }
 
     // Construct path
     std::vector<std::shared_ptr<Node>> path;
     std::shared_ptr<Node> u = endNodePtr;
-    ROS_INFO("[Dijkstra] Starting path reconstruction with end node ID %d", u->getId());
+    ROS_INFO("[Dijkstra] Starting path reconstruction with end node");
     path.push_back(u);
     while (prev[u->getId()] != nullptr) {
         path.push_back(prev[u->getId()]);
@@ -152,6 +144,7 @@ std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const C
     }
     std::reverse(path.begin(), path.end());
 
+    ROS_INFO("[Dijkstra] Yielded path with %d nodes with distance %f.", (int)path.size(), dist[endNodePtr->getId()]);
     return nodesToCoordinates(path);
 }
 

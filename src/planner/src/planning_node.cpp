@@ -144,9 +144,7 @@ int main(int argc, char **argv) {
     endMarker.color.a = 1.0f;
     nodePublisher.publish(endMarker);
 
-    ROS_INFO("Testing Dijkstra routing from [%d %d] to [%d %d].", start.getX(), start.getY(), end.getX(), end.getY());
     std::vector<Coordinate> path = graph.findShortestPath(start, end);
-    ROS_INFO("Dijkstra yielded path with %d nodes.", (int)path.size());
 
     visualization_msgs::Marker pathLine;
     pathLine.header.frame_id = "/map";
@@ -158,7 +156,6 @@ int main(int argc, char **argv) {
     pathLine.color.b = 1.0f;
     pathLine.color.a = 1.0f;
     for (int i = 1; i < path.size(); i++) {
-        ROS_INFO("Path node [%d %d]", path[i].getX(), path[i].getY());
         geometry_msgs::Point p0;
         p0.x = path[i - 1].getX() * grid->getResolution();
         p0.y = path[i - 1].getY() * grid->getResolution();
@@ -170,12 +167,6 @@ int main(int argc, char **argv) {
         pathLine.points.push_back(p1);
     }
     nodePublisher.publish(pathLine);
-
-    /*
-    Pose pose = poseHandler.getPose();
-    Coordinate initCoord(pose.x, pose.y);
-    Node initNode(initCoord);
-    */
 
     ros::Rate rate(RATE);
 
