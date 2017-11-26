@@ -26,10 +26,14 @@ public:
     Path(nav_msgs::Path setPath);
     virtual ~Path() = default;
 
+    void updateNodesVisited();
+    int getNodesVisited() const;
+    int getTotalNodes() const;
+    
+    std::vector<Node> path;
 private:
     int totalNodes;
     int nodesVisited;
-    std::vector<Node> path;
 };
 
 class PathHandler {
@@ -38,10 +42,10 @@ public:
     virtual ~PathHandler() = default;
 
     bool hasPath() const;
-    std::shared_ptr<Path> getPath() const;
+    Path getPath() const;
     void callback(const nav_msgs::Path::ConstPtr &msg);
 
 private:
     bool receivedPath = false;
-    std::shared_ptr<Path> path;
+    Path path;
 };

@@ -12,12 +12,19 @@
 namespace {
     const std::string NODE_NAME = "controller";
     const double RATE = 10.0;
+    const double POSITION_ERROR = 0.001;
 
     using PathCallback = boost::function<void(const nav_msgs::Path::ConstPtr&)>;
     using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
     using PoseLiveCallback = boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)>;
-}
 
+    bool hasReachedNode(Pose pose, Node node) {
+        double xerr = abs(pose.x - node.getX());
+        double yerr = abs(pose.y - node.getY());
+
+        return (xerr <= POSITION_ERROR && yerr <= POSITION_ERROR);
+    }
+}
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, NODE_NAME);
@@ -50,7 +57,18 @@ int main(int argc, char **argv) {
     }
     
     // Get the entire shortest path to traverse
-    std::shared_ptr<Path> path = pathHandler.getPath();
+    Path pathObject = pathHandler.getPath();
+    std::vector<Node> path = pathObject.path;
+    
+    for (int i = 0; i < pathObject.getTotalNodes(); ++i) {
+        Node dest = path[i];
+        Pose currentPose = poseHandler.getPose();
+
+        while (!hasReachedNode(currentPose, dest)) {
+            // Add the controller and make it travel for a few seconds
+        }
+
+    }
     
     while (ros::ok()) {
     	loop_rate.sleep();

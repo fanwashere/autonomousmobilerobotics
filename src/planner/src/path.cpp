@@ -27,6 +27,18 @@ bool Node::isVisited() const {
     return this->visited;
 }
 
+void Path::updateNodesVisited() {
+    nodesVisited++;
+}
+
+int Path::getNodesVisited() const{
+    return nodesVisited;
+}
+
+int Path::getTotalNodes() const {
+    return totalNodes;
+}
+
 Path::Path(nav_msgs::Path setPath) {
     ROS_INFO("GENERATING PATHS");
 
@@ -48,14 +60,14 @@ bool PathHandler::hasPath() const {
     return receivedPath;
 }
 
-std::shared_ptr<Path> PathHandler::getPath() const {
+Path PathHandler::getPath() const {
     return path;
 }
 
 void PathHandler::callback(const nav_msgs::Path::ConstPtr &msg) {
     if (!receivedPath) {
         receivedPath = true;
-        path = std::make_shared<Path>(*msg);
+        path = Path(*msg);
     }
 }
 
