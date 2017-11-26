@@ -15,14 +15,6 @@ void Node::markAsVisited() {
     this->visited = true;
 }
 
-float Node::getX() const {
-    return this->x;
-}
-
-float Node::getY() const {
-    return this->y;
-}
-
 bool Node::isVisited() const {
     return this->visited;
 }

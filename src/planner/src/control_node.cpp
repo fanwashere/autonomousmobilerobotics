@@ -19,10 +19,38 @@ namespace {
     using PoseLiveCallback = boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)>;
 
     bool hasReachedNode(Pose pose, Node node) {
-        double xerr = abs(pose.x - node.getX());
-        double yerr = abs(pose.y - node.getY());
+        double xerr = abs(pose.x - node.x);
+        double yerr = abs(pose.y - node.y);
 
         return (xerr <= POSITION_ERROR && yerr <= POSITION_ERROR);
+    }
+
+    void getLine(float x1, float y1, float x2, float y2, float &a, float &b, float &c) {
+        a = y2 - y1;
+        b = x2 - x1;
+        c = x1*y2 - x2*y1;
+    }
+
+    bool distanceToLineSegment(Node p1, Node p2, Pose x, float &crossTrackError) {
+        bool outside = false;
+
+        Node line_segment = Node( p2.x - p1.x, p2.y - p1.y );
+        Node p1_to_x = Node(x.x - p1.x, x.y - p1.y);
+
+        float a, b, c;
+        getLine(p1.x, p1.y, p2.x, p2.y, a, b, c);
+        float distance = abs( a*x.x + b*x.y + c )/ sqrt(a*a + b*b);
+
+        float norm = a*a + b*b;
+        float dot_line_segment_p1_to_x = line_segment.x*p1_to_x.x + line_segment.y*p1_to_x.y;
+
+        if (dot_line_segment_p1_to_x/norm > 1) {
+            outside = true;
+        }
+
+        
+
+        return outside;
     }
 }
 
@@ -60,11 +88,15 @@ int main(int argc, char **argv) {
     Path pathObject = pathHandler.getPath();
     std::vector<Node> path = pathObject.path;
     
-    for (int i = 0; i < pathObject.getTotalNodes(); ++i) {
-        Node dest = path[i];
+    for (int i = 0; i < pathObject.getTotalNodes() - 1; ++i) {
+        Node end_point = path[i+1];
+        Node start_point = path[i];
+        // traj_angle =  rads
+        double traj_angle = atan2( end_point.y - start_point.y, end_point.x - start_point.x );
+
         Pose currentPose = poseHandler.getPose();
 
-        while (!hasReachedNode(currentPose, dest)) {
+        while (!hasReachedNode(currentPose, end_point)) {
             // Add the controller and make it travel for a few seconds
         }
 

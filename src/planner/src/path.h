@@ -11,12 +11,10 @@ public:
     
     void markAsVisited();
     bool isVisited() const;
-    float getX() const;
-    float getY() const;
-
-private:
     float x;
     float y;
+
+private:
     bool visited;
 };
 
@@ -29,7 +27,7 @@ public:
     void updateNodesVisited();
     int getNodesVisited() const;
     int getTotalNodes() const;
-    
+
     std::vector<Node> path;
 private:
     int totalNodes;
