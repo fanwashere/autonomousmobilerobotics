@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 #include "visualizer.h"
+#include "graph.h"
 
 namespace {
     const std::string VISUALIZATION_NAMESPACE = "graph";
@@ -75,6 +76,13 @@ void Visualizer::drawEdge(const Coordinate &startCoord, const Coordinate &endCoo
     line.points.push_back(endPoint);
 
     publisher.publish(line);
+}
+
+void Visualizer::drawEdges(const std::shared_ptr<Node> &node) {
+    std::vector<std::shared_ptr<Edge>> edges = node->getEdges();
+    for (int i = 0; i < edges.size(); i++) {
+        drawEdge(node->getCoordinate(), edges[i]->getDestination()->getCoordinate());
+    }
 }
 
 void Visualizer::drawPath(const std::vector<Coordinate> &path) {

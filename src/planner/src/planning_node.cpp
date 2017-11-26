@@ -66,11 +66,7 @@ int main(int argc, char **argv) {
         std::vector<std::shared_ptr<Edge>> edges = newNode->getEdges();
         ROS_INFO("Added node to graph [x: %d, y: %d] with %d edges", coord.getX(), coord.getY(), (int)edges.size());
         visualizer.drawNode(coord);
-
-        for (int j = 0; j < edges.size(); j++) {
-            std::shared_ptr<Node> destinationNode = edges[j]->getDestination();
-            visualizer.drawEdge(coord, destinationNode->getCoordinate());
-        }
+        visualizer.drawEdges(newNode);
     }
 
     /* Test Dijkstra */
