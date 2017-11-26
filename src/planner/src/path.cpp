@@ -16,6 +16,8 @@ void Node::markAsVisited() {
 }
 
 Path::Path(nav_msgs::Path setPath) {
+    ROS_INFO("GENERAtINg PaThs");
+    
     auto nodes = setPath.poses;
     totalNodes = nodes.size();
     nodesVisited = 0;

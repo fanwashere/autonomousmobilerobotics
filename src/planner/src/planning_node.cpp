@@ -6,6 +6,7 @@
 #include <nav_msgs/Path.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <visualization_msgs/Marker.h>
+#include <geometry_msgs/PoseStamped.h>
 
 namespace {
     const std::string NODE_NAME = "planner";
@@ -64,56 +65,14 @@ int main(int argc, char **argv) {
         graph.addNode(newNode);
 
         std::vector<std::shared_ptr<Edge>> edges = newNode->getEdges();
-        ROS_INFO("Added node to graph [x: %d, y: %d] with %d edges", coord.getX(), coord.getY(), (int)edges.size());
-
-        visualization_msgs::Marker marker;
-        marker.header.frame_id = "/map";
-        marker.header.stamp = ros::Time::now();
-        marker.ns = "nodes";
-        marker.id = newNode->getId();
-        marker.type = visualization_msgs::Marker::SPHERE;
-        marker.pose.position.x = coord.getX() * grid->getResolution();
-        marker.pose.position.y = coord.getY() * grid->getResolution();
-        marker.pose.position.z = 0;
-        marker.scale.x = 0.2;
-        marker.scale.y = 0.2;
-        marker.scale.z = 0.2;
-        marker.color.r = 1.0f;
-        marker.color.a = 1.0f;
-
-        nodePublisher.publish(marker);
-
-        for (int j = 0; j < edges.size(); j++) {
-            std::shared_ptr<Edge> edge = edges[j];
-            std::shared_ptr<Node> destinationNode = edge->getDestination();
-
-            visualization_msgs::Marker edgeLine;
-            edgeLine.header.frame_id = "/map";
-            edgeLine.header.stamp = ros::Time::now();
-            edgeLine.ns = "nodes";
-            edgeLine.id = newNode->getId() * NUM_NODES + destinationNode->getId();
-            edgeLine.type = visualization_msgs::Marker::LINE_STRIP;
-            edgeLine.scale.x = 0.05;
-            edgeLine.color.r = 1.0f;
-            edgeLine.color.a = 0.7f;
-
-            geometry_msgs::Point startPoint, endPoint;
-            startPoint.x = coord.getX() * grid->getResolution();
-            startPoint.y = coord.getY() * grid->getResolution();
-            endPoint.x = destinationNode->getCoordinate().getX() * grid->getResolution();
-            endPoint.y = destinationNode->getCoordinate().getY() * grid->getResolution();
-
-            edgeLine.points.push_back(startPoint);
-            edgeLine.points.push_back(endPoint);
-
-            nodePublisher.publish(edgeLine);
-        }
+        // ROS_INFO("Added node to graph [x: %d, y: %d] with %d edges", coord.getX(), coord.getY(), (int)edges.size());
     }
 
     // WRITE A FUNCTION TO GO FROM COORDINATE PATH -> NAV MSGS PATH
 
     // Control node publisher
-    ros::Publisher controlPub = n.advertise<nav_msgs::Path>("/path", 100);
+    ROS_INFO("ADVERTISING TO path");
+    ros::Publisher controlPub = n.advertise<nav_msgs::Path>("path", 10);
     nav_msgs::Path path;
 
     // -- This section is for testing the robot -- /
@@ -123,9 +82,22 @@ int main(int argc, char **argv) {
     p2.x = 3; p2.y = 4;
     p3.x = 8; p3.y = 2;
 
-    path.poses[0].pose.position = p1;
-    path.poses[1].pose.position = p2;
-    path.poses[2].pose.position = p3;
+    geometry_msgs::PoseStamped a1, a2, a3;
+
+    a1.pose.position = p1;
+    a2.pose.position = p2;
+    a3.pose.position = p3;
+
+    // geometry_msgs::PoseStamped p [] = {
+    //     a1, a2, a3    
+    // };
+
+    std::vector<geometry_msgs::PoseStamped> p;
+    p.push_back(a1);
+    p.push_back(a2);
+    p.push_back(a3);
+
+    path.poses = p;
 
     controlPub.publish(path);
 
