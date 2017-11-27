@@ -157,25 +157,18 @@ std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, std::ve
     Coordinate closestWaypoint;
     int shortestIndex;
     ROS_INFO("Start coordinate [%d %d]", start.getX(), start.getY());
-    ROS_INFO("Number of waypoints: %d", (int)waypoints.size());
     for (int i = 0; i < waypoints.size(); i++) {
-        ROS_INFO("To coordinate [%d %d]", waypoints[i].getX(), waypoints[i].getY());
         std::pair<std::vector<Coordinate>, double> result = findShortestPath(start, waypoints[i]);
-        ROS_INFO("Distance: %f", result.second);
         if (result.second < shortestDistance) {
-            ROS_INFO("Shorter distance found: %f", result.second);
             path = result.first;
             shortestDistance = result.second;
             closestWaypoint = waypoints[i];
             shortestIndex = i;
         }
     }
-    ROS_INFO("Found shortest (index %d).", shortestIndex);
 
     waypoints.erase(waypoints.begin() + shortestIndex);
-    ROS_INFO("Removed shortest, %d waypoints remain.", (int)waypoints.size());
     std::vector<Coordinate> nextPath = findShortestPath(closestWaypoint, waypoints);
-    ROS_INFO("Next shortest path found.");
     if (nextPath.size() > 0) {
         path.insert(path.end(), nextPath.begin() + 1, nextPath.end());
     }
