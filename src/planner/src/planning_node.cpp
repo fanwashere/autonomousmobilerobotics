@@ -11,7 +11,7 @@
 namespace {
     const std::string NODE_NAME = "planner";
     const double RATE = 1.0;
-    const int NUM_NODES = 200;
+    const int NUM_NODES = 2000;
 
     using MapCallback = boost::function<void(const nav_msgs::OccupancyGrid::ConstPtr&)>;
     using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
@@ -71,10 +71,10 @@ int main(int argc, char **argv) {
     }
 
     /* Test Dijkstra */
-    Coordinate start(5, 5);
+    Coordinate start(15, 5);
     visualizer.drawWaypoint(start);
 
-    Coordinate end(95, 95);
+    Coordinate end(10, 40);
     visualizer.drawWaypoint(end);
 
     std::vector<Coordinate> path = graph.findShortestPath(start, end);
