@@ -15,33 +15,31 @@ using namespace Eigen;
 
 namespace {
     const std::string NODE_NAME = "controller";
-    const double RATE = 1.0;
+    const double RATE = 10.0;
     
-    const double POSITION_ERROR = 0.001;
     const float pi = 3.141592;
-        
-    const float velocity = 1.0;
+    
+    const float headingGain = 1.25;
+    const float crosstrackGain = 1.25;
+    
+    const float velocity = 0.2;
     const float delta_max = 25*pi/180;
-    const float k = 0.01;
-    const float robot_length = 1;
+    const float robot_length = 0.25;
 
     using PathCallback = boost::function<void(const nav_msgs::Path::ConstPtr&)>;
     using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
     using PoseLiveCallback = boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)>;
     
-    bool hasReachedNode(Pose pose, Node node) {
-        double xerr = abs(pose.x - node.x);
-        double yerr = abs(pose.y - node.y);
-
-        return (xerr <= POSITION_ERROR && yerr <= POSITION_ERROR);
-    }
-
     float angleWrap(float angle) {
         return std::fmod(angle+pi, 2*pi) - pi;
     }
 
     bool distanceToLineSegment(Vector2f p1, Vector2f p2, Vector2f x, float &crosstrackError) {
         bool outside = false;
+
+        if ( (p2-x).norm() < 0.5) {
+            outside = true;
+        }
         
         Vector2f line_segment = p2-p1;
         Vector2f p1_to_x = x-p1;
@@ -51,9 +49,9 @@ namespace {
 
         ROS_INFO("THRESHOLD VALUE  -> %f", (line_segment.dot(p1_to_x) / line_segment.squaredNorm()));
 
-        if ( (line_segment.dot(p1_to_x) / line_segment.squaredNorm())  > 1 ) {
-            outside = true;
-        }
+        // if ( (line_segment.dot(p1_to_x) / line_segment.squaredNorm())  > 1 ) {
+        //     outside = true;
+        // }
 
         float pos_neg = 1.0;
         
@@ -64,9 +62,11 @@ namespace {
         Vector3f cross_product = updated_line_segment.cross(updated_p1_to_x);
 
         if (cross_product(2) < 0) {
-            pos_neg = -1.0;
+            crosstrackError = -1.0*distance.norm();
+        } else {
+            crosstrackError = 1.0*distance.norm();
         }
-        crosstrackError = distance.norm()*pos_neg;
+        
         return outside;
     }    
 }
@@ -116,12 +116,7 @@ int main(int argc, char **argv) {
     //ROS_INFO("totalNodes : %u", totalNodes);
     //ROS_INFO("Path valid? : %lu", path.size());
 
-    while ( nodesVisited != totalNodes ) {
-        if (!ros::ok()) {
-            ROS_INFO("ROS NOT OKAY");
-            break;
-        }
-        
+    while ( nodesVisited != totalNodes && ros::ok()) {
         ROS_INFO("Nodes Visited : %u", nodesVisited);
 
         int i = nodesVisited; // Easier right now - change later;
@@ -129,39 +124,30 @@ int main(int argc, char **argv) {
         ROS_INFO("END POINT : [%f %f]", (path[i+1]).x, (path[i+1]).y);
         ROS_INFO("START POINT : [%f %f]", path[i].x, path[i].y);
 
-        Vector2f end_point(path[i+1].x, path[i+1].y);
         Vector2f start_point(path[i].x, path[i].y);
+        Vector2f end_point(path[i+1].x, path[i+1].y);
         float traj_angle = (float) atan2( end_point(1) - start_point(1), end_point(0) - start_point(0) );
         
         bool next_point = false;
 
-        while (!next_point) {
+        while (!next_point && ros::ok()) {
             float crosstrackError;
 
             Pose initPos = poseHandler.getPose(); // change initPose later in cleanup
             X(0) = initPos.x; X(1) = initPos.y; X(2) = initPos.yaw;
 
-            ROS_INFO("[x, y] : [%f, %f]", X(0), X(1));
-            
+            ROS_INFO("[X, Y, YAW] : [%f, %f, %f]", X(0), X(1), X(2));
             Vector2f tempX(X(0), X(1));
+
             bool next_point = distanceToLineSegment(start_point, end_point, tempX, crosstrackError);
             ROS_INFO("CROSS TRACK ERROR - %f", crosstrackError);
 
-            // Sorry for the double - float stuff;
-            float delta = std::max(
-                -delta_max, std::min(delta_max, angleWrap(traj_angle - X(2)) + (float) atan2( -k*crosstrackError, velocity ))
-            );
-
-            Xd(0) = velocity*cos(X(2));
-            Xd(1) = velocity*sin(X(2));
-            Xd(2) = velocity*tan( delta/robot_length );
-
-            vel.linear.x = Xd(0);
-            vel.linear.y = Xd(1);
-            vel.angular.z = Xd(2);
-
-            //ROS_INFO("[Vx - %f] [Vy - %f] [Yaw - %f]", Xd(0), Xd(1), Xd(2));
-
+            float headingError = traj_angle - X(2);
+            ROS_INFO("HEADING ERROR : %f", headingError);
+            
+            vel.linear.x = -crosstrackGain*crosstrackError;
+            vel.angular.z = -headingGain*headingError;
+            
             velocity_publisher.publish(vel);
             
             loop_rate.sleep();
