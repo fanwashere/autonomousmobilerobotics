@@ -9,6 +9,8 @@
 #include <visualization_msgs/Marker.h>
 #include <geometry_msgs/PoseStamped.h>
 
+// #define LIVE
+
 namespace {
     const std::string NODE_NAME = "planner";
     const double RATE = 1.0;

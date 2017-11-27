@@ -13,15 +13,25 @@
 #include "visualizer.h"
 
 using namespace Eigen;
+// #define LIVE
 
 namespace {
     const std::string NODE_NAME = "controller";
     const double RATE = 10.0;
     
     const float pi = 3.141592;
-    
+
+#ifdef LIVE
+    const float headingGain = 1.0;
+    const float crosstrackGain = 0.45;
+    const float correctionX = 0.410;
+    const float correctionY = 3.765;
+#else
     const float headingGain = 0.25;
     const float crosstrackGain = 0.25;
+    const float correctionX = 0.0;
+    const float correctionY = 0.0;
+#endif
     
     const float velocity = 0.2;
     const float delta_max = 25*pi/180;
@@ -104,7 +114,9 @@ int main(int argc, char **argv) {
         int i = nodesVisited; // Easier right now - change later;
         
         Pose startPos = poseHandler.getPose(); // change initPose later in cleanup
-            
+        startPos.x += correctionX;
+        startPos.y += correctionY;
+
         ROS_INFO("START POINT : [%f %f]", startPos.x, startPos.y);
         ROS_INFO("END POINT : [%f %f]", path[i].x, path[i].y);
 
@@ -114,6 +126,9 @@ int main(int argc, char **argv) {
         
         while (ros::ok()) {
             Pose initPos = poseHandler.getPose(); // change initPose later in cleanup
+            initPos.x += correctionX;
+            initPos.y += correctionY;
+
             visualizer.drawRobot(initPos);
 
             X(0) = initPos.x; X(1) = initPos.y; X(2) = initPos.yaw;
@@ -121,7 +136,7 @@ int main(int argc, char **argv) {
             ROS_INFO("[X, Y, YAW] : [%f, %f, %f]", X(0), X(1), X(2));
             Vector2f tempX(X(0), X(1));
 
-            if ( (end_point-tempX).norm() < 0.5) {
+            if ( (end_point-tempX).norm() < 0.25) {
                 ROS_INFO("Distance bw Destination and CurrPoint : %f", (end_point-tempX).norm());
                 break;
             }
