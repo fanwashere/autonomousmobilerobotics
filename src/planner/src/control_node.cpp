@@ -19,8 +19,8 @@ namespace {
     
     const float pi = 3.141592;
     
-    const float headingGain = 1.25;
-    const float crosstrackGain = 1.25;
+    const float headingGain = 0.75;
+    const float crosstrackGain = 1;
     
     const float velocity = 0.2;
     const float delta_max = 25*pi/180;
@@ -140,13 +140,13 @@ int main(int argc, char **argv) {
             Vector2f tempX(X(0), X(1));
 
             bool next_point = distanceToLineSegment(start_point, end_point, tempX, crosstrackError);
-            ROS_INFO("CROSS TRACK ERROR - %f", crosstrackError);
+            ROS_INFO("CROSS TRACK ERROR : %f", crosstrackError);
 
             float headingError = traj_angle - X(2);
             ROS_INFO("HEADING ERROR : %f", headingError);
             
-            vel.linear.x = -crosstrackGain*crosstrackError;
-            vel.angular.z = -headingGain*headingError;
+            vel.linear.x = velocity;
+            vel.angular.z = -headingGain*headingError  - crosstrackGain*crosstrackError;
             
             velocity_publisher.publish(vel);
             
