@@ -59,7 +59,7 @@ void Visualizer::drawEdge(const Coordinate &startCoord, const Coordinate &endCoo
     geometry_msgs::Point startPoint, endPoint;
     startPoint.x = startCoord.getX() * scalingFactor;
     startPoint.y = startCoord.getY() * scalingFactor;
-    endPoint.x = endCoord.getX() * scalingFactor; 
+    endPoint.x = endCoord.getX() * scalingFactor;
     endPoint.y = endCoord.getY() * scalingFactor;
 
     visualization_msgs::Marker line;
@@ -107,6 +107,44 @@ void Visualizer::drawPath(const std::vector<Coordinate> &path) {
         endPoint.y = path[i].getY() * scalingFactor;
         line.points.push_back(endPoint);
     }
+
+    publisher.publish(line);
+}
+
+void Visualizer::drawRobot(const Coordinate &coord, const double heading) {
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = VISUALIZATION_FRAME_ID;
+    marker.header.stamp = ros::Time::now();
+    marker.ns = VISUALIZATION_NAMESPACE;
+    marker.id = 2;
+    marker.type = visualization_msgs::Marker::SPHERE;
+    marker.pose.position.x = coord.getX() * scalingFactor;
+    marker.pose.position.y = coord.getY() * scalingFactor;
+    marker.pose.position.z = 0;
+    marker.scale.x = marker.scale.y = marker.scale.z = 0.35;
+    marker.color.g = 1.0f;
+    marker.color.a = 1.0f;
+
+    publisher.publish(marker);
+
+    geometry_msgs::Point current, destination;
+    current.x = coord.getX() * scalingFactor;
+    current.y = coord.getY() * scalingFactor;
+    destination.x = coord.getX() * scalingFactor + 0.5 * cos(heading);
+    destination.y = coord.getY() * scalingFactor + 0.5 * sin(heading);
+
+    visualization_msgs::Marker line;
+    line.header.frame_id = VISUALIZATION_FRAME_ID;
+    line.header.stamp = ros::Time::now();
+    line.ns = VISUALIZATION_NAMESPACE;
+    line.id = 1;
+    line.type = visualization_msgs::Marker::LINE_STRIP;
+    line.scale.x = 0.05;
+    line.color.g = 1.0f;
+    line.color.a = 1.0f;
+
+    line.points.push_back(current);
+    line.points.push_back(destination);
 
     publisher.publish(line);
 }

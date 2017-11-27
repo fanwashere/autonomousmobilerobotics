@@ -13,9 +13,10 @@ public:
     void drawEdge(const Coordinate &startCoord, const Coordinate &endCoord);
     void drawEdges(const std::shared_ptr<Node> &node);
     void drawPath(const std::vector<Coordinate> &path);
+    void drawRobot(const Coordinate &coord, const double heading);
 
 private:
     ros::Publisher publisher;
     double scalingFactor;
-    int iota = 0;
+    int iota = 10;
 };
