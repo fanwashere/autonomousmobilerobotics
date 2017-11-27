@@ -21,8 +21,8 @@ namespace {
     const float pi = 3.141592;
 
 #ifdef LIVE
-    const float headingGain = 1.0;
-    const float crosstrackGain = 0.45;
+    const float headingGain = 0.8;
+    const float crosstrackGain = 1.5;
     const float correctionX = 0.410;
     const float correctionY = 3.765;
 #else
@@ -32,8 +32,8 @@ namespace {
     const float correctionY = 0.0;
 #endif
     
-    const float velocity = 0.2;
-    const float delta_max = 25*pi/180;
+    const float velocity = 0.1;
+    const float delta_max = 35*pi/180;
     const float robot_length = 0.25;
 
     using PathCallback = boost::function<void(const nav_msgs::Path::ConstPtr&)>;
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
 
             visualizer.drawRobot(initPos);
 
-            X(0) = initPos.x; X(1) = initPos.y; X(2) = initPos.yaw;
+            X(0) = initPos.x; X(1) = initPos.y; X(2) = angleWrap(initPos.yaw);
 
             ROS_INFO("[X, Y, YAW] : [%f, %f, %f]", X(0), X(1), X(2));
             Vector2f tempX(X(0), X(1));
@@ -142,13 +142,13 @@ int main(int argc, char **argv) {
 
             float crosstrackError;
             distanceToLineSegment(start_point, end_point, tempX, crosstrackError);
-            float headingError = traj_angle - X(2);
+            float headingError = std::max(-delta_max, std::min(delta_max, angleWrap(traj_angle - X(2))));
             
             ROS_INFO("CROSSTRACK ERROR : %f m", crosstrackError);
             ROS_INFO("HEADING ERROR : %f rad", headingError);
             
             vel.linear.x = velocity;
-            vel.angular.z = (headingGain*headingError + crosstrackGain*crosstrackError);
+            vel.angular.z = (headingGain * headingError + crosstrackGain * crosstrackError);
 
             ROS_INFO("ANGULAR VEOCITY : %f", vel.angular.z);
             
