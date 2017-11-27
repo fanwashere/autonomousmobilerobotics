@@ -2,6 +2,7 @@
 #include "pose.h"
 #include "map.h"
 #include "graph.h"
+#include "visualizer.h"
 #include <geometry_msgs/Point.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/OccupancyGrid.h>
@@ -41,6 +42,7 @@ int main(int argc, char **argv) {
 
     // For visualization
     ros::Publisher nodePublisher = n.advertise<visualization_msgs::Marker>("nodes", 500);
+    Visualizer visualizer(nodePublisher);
 
     // Wait for map to become available.
     while(ros::ok() && !mapHandler.hasData()) {
@@ -52,6 +54,7 @@ int main(int argc, char **argv) {
     std::shared_ptr<Grid> grid = mapHandler.getGrid();
     grid->padObstacles(2);
     Graph graph(grid);
+    visualizer.setScalingFactor(grid->getResolution());
 
     for (int i = 0; i < NUM_NODES; i++) {
         Coordinate coord;
@@ -60,87 +63,22 @@ int main(int argc, char **argv) {
         } while(grid->checkOccupancy(coord));
 
         std::shared_ptr<Node> newNode = std::make_shared<Node>(coord);
-
         graph.addNode(newNode);
-
         std::vector<std::shared_ptr<Edge>> edges = newNode->getEdges();
         ROS_INFO("Added node to graph [x: %d, y: %d] with %d edges", coord.getX(), coord.getY(), (int)edges.size());
-
-        visualization_msgs::Marker marker;
-        marker.header.frame_id = "/map";
-        marker.header.stamp = ros::Time::now();
-        marker.ns = "nodes";
-        marker.id = newNode->getId();
-        marker.type = visualization_msgs::Marker::SPHERE;
-        marker.pose.position.x = coord.getX() * grid->getResolution();
-        marker.pose.position.y = coord.getY() * grid->getResolution();
-        marker.pose.position.z = 0;
-        marker.scale.x = 0.2;
-        marker.scale.y = 0.2;
-        marker.scale.z = 0.2;
-        marker.color.r = 1.0f;
-        marker.color.a = 1.0f;
-
-        nodePublisher.publish(marker);
-
-        for (int j = 0; j < edges.size(); j++) {
-            std::shared_ptr<Edge> edge = edges[j];
-            std::shared_ptr<Node> destinationNode = edge->getDestination();
-
-            visualization_msgs::Marker edgeLine;
-            edgeLine.header.frame_id = "/map";
-            edgeLine.header.stamp = ros::Time::now();
-            edgeLine.ns = "nodes";
-            edgeLine.id = newNode->getId() * NUM_NODES + destinationNode->getId();
-            edgeLine.type = visualization_msgs::Marker::LINE_STRIP;
-            edgeLine.scale.x = 0.05;
-            edgeLine.color.r = 1.0f;
-            edgeLine.color.a = 0.7f;
-
-            geometry_msgs::Point startPoint, endPoint;
-            startPoint.x = coord.getX() * grid->getResolution();
-            startPoint.y = coord.getY() * grid->getResolution();
-            endPoint.x = destinationNode->getCoordinate().getX() * grid->getResolution();
-            endPoint.y = destinationNode->getCoordinate().getY() * grid->getResolution();
-
-            edgeLine.points.push_back(startPoint);
-            edgeLine.points.push_back(endPoint);
-
-            nodePublisher.publish(edgeLine);
-        }
+        visualizer.drawNode(coord);
+        visualizer.drawEdges(newNode);
     }
 
-    // WRITE A FUNCTION TO GO FROM COORDINATE PATH -> NAV MSGS PATH
+    /* Test Dijkstra */
+    Coordinate start(5, 5);
+    visualizer.drawWaypoint(start);
 
-    // Control node publisher
-    ros::Publisher controlPub = n.advertise<nav_msgs::Path>("/path", 100);
-    nav_msgs::Path path;
+    Coordinate end(95, 95);
+    visualizer.drawWaypoint(end);
 
-    // -- This section is for testing the robot -- /
-    geometry_msgs::Point p1, p2, p3;
-
-    p1.x = 0; p1.y = 0;
-    p2.x = 3; p2.y = 4;
-    p3.x = 8; p3.y = 2;
-
-    path.poses[0].pose.position = p1;
-    path.poses[1].pose.position = p2;
-    path.poses[2].pose.position = p3;
-
-    controlPub.publish(path);
-
-    // -- End of Test Section -- /
-    
-    // std::vector<geometry_msgs::Point> path;
-    //Coordinate start(0, 0);
-    //Coordinate end(10, 10);
-    //std::vector<Coordinate> path = graph.findShortestPath(start, end);
-
-    /*
-    Pose pose = poseHandler.getPose();
-    Coordinate initCoord(pose.x, pose.y);
-    Node initNode(initCoord);
-    */
+    std::vector<Coordinate> path = graph.findShortestPath(start, end);
+    visualizer.drawPath(path);
 
     ros::Rate rate(RATE);
 

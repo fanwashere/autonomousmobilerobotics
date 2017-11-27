@@ -22,7 +22,7 @@ set(SOURCES
   src/pose.cpp
   src/map.cpp
   src/graph.cpp
-  src/path.cpp
+  src/visualizer.cpp
 )
 
 include_directories(
