@@ -1,21 +1,17 @@
 #include <ros/ros.h>
 #include "path.h"
 
-namespace {
-
-}
-
-Node::Node(float setX, float setY)
+PathNode::PathNode(float setX, float setY)
 : x(setX)
 , y(setY)
 , visited(false)
 {}
 
-void Node::markAsVisited() {
+void PathNode::markAsVisited() {
     this->visited = true;
 }
 
-bool Node::isVisited() const {
+bool PathNode::isVisited() const {
     return this->visited;
 }
 
@@ -31,7 +27,7 @@ int Path::getTotalNodes() const {
     return this->totalNodes;
 }
 
-std::vector<Node> Path::getPath() const {
+std::vector<PathNode> Path::getPath() const {
     return this->path;
 }
 
@@ -43,7 +39,7 @@ Path::Path(nav_msgs::Path setPath) {
     nodesVisited = 0;
 
     for (int i = 0 ; i < totalNodes; ++i) {
-        auto cd = Node(nodes[i].pose.position.x, nodes[i].pose.position.y);
+        auto cd = PathNode(nodes[i].pose.position.x, nodes[i].pose.position.y);
         path.push_back(cd);
     }
 }

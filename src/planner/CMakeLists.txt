@@ -26,6 +26,7 @@ set(SOURCES
   src/map.cpp
   src/graph.cpp
   src/visualizer.cpp
+  src/path.cpp
 )
 
 include_directories(

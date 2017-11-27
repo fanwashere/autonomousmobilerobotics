@@ -1,6 +1,5 @@
 #include <ros/ros.h>
 #include "pose.h"
-<<<<<<< HEAD
 #include "path.h"
 #include "map.h"
 #include <tf/transform_datatypes.h>
@@ -8,20 +7,16 @@
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
-=======
-#include "map.h"
-#include "visualizer.h"
->>>>>>> master
 #include <visualization_msgs/Marker.h>
 #include <math.h>
 #include <Eigen/Dense>
+#include "visualizer.h"
 
 using namespace Eigen;
 
 namespace {
     const std::string NODE_NAME = "controller";
     const double RATE = 10.0;
-<<<<<<< HEAD
     
     const float pi = 3.141592;
     
@@ -31,9 +26,8 @@ namespace {
     const float velocity = 0.2;
     const float delta_max = 25*pi/180;
     const float robot_length = 0.25;
-=======
->>>>>>> master
 
+    using PathCallback = boost::function<void(const nav_msgs::Path::ConstPtr&)>;
     using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
     using PoseLiveCallback = boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)>;
     
@@ -74,6 +68,11 @@ int main(int argc, char **argv) {
     ROS_INFO("Subscribed to /gazebo/model_states topic");
 #endif
 
+    PathHandler pathHandler;
+    PathCallback pathCallback = boost::bind(&PathHandler::callback, &pathHandler, _1);
+    auto pathSubscriber = n.subscribe("/path", 1, pathCallback);
+    ROS_INFO("Subscribed to /path topic");
+
     ros::Publisher visualizationPublisher = n.advertise<visualization_msgs::Marker>("robot", 1);
     Visualizer visualizer(visualizationPublisher);
     visualizer.setScalingFactor(1.0); // Since pose is given in actual meters, don't need scaling.
@@ -92,30 +91,31 @@ int main(int argc, char **argv) {
     
     // Get the entire shortest path to traverse
     Path pathObject = pathHandler.getPath();
-    std::vector<Node> path = pathObject.getPath();
+    std::vector<PathNode> path = pathObject.getPath();
     
     Vector3f Xd;
     Vector3f X;
     int nodesVisited = 0;
     int totalNodes = pathObject.getTotalNodes();
 
-    //ROS_INFO("totalNodes : %u", totalNodes);
-    //ROS_INFO("Path valid? : %lu", path.size());
-
-    while ( nodesVisited != totalNodes && ros::ok()) {
+    while ( nodesVisited < totalNodes && ros::ok()) {
         ROS_INFO("Nodes Visited : %u", nodesVisited);
 
         int i = nodesVisited; // Easier right now - change later;
+        
+        Pose startPos = poseHandler.getPose(); // change initPose later in cleanup
+            
+        ROS_INFO("START POINT : [%f %f]", startPos.x, startPos.y);
+        ROS_INFO("END POINT : [%f %f]", path[i].x, path[i].y);
 
-        ROS_INFO("END POINT : [%f %f]", (path[i+1]).x, (path[i+1]).y);
-        ROS_INFO("START POINT : [%f %f]", path[i].x, path[i].y);
-
-        Vector2f start_point(path[i].x, path[i].y);
-        Vector2f end_point(path[i+1].x, path[i+1].y);
+        Vector2f start_point(startPos.x, startPos.y);
+        Vector2f end_point(path[i].x, path[i].y);
         float traj_angle = (float) atan2( end_point(1) - start_point(1), end_point(0) - start_point(0) );
         
         while (ros::ok()) {
             Pose initPos = poseHandler.getPose(); // change initPose later in cleanup
+            visualizer.drawRobot(initPos);
+
             X(0) = initPos.x; X(1) = initPos.y; X(2) = initPos.yaw;
 
             ROS_INFO("[X, Y, YAW] : [%f, %f, %f]", X(0), X(1), X(2));

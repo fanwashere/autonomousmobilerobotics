@@ -4,10 +4,10 @@
 #include <geometry_msgs/Point.h>
 #include "map.h"
 
-class Node {
+class PathNode {
 public:
-    Node() = default;
-    Node(float setX, float setY);
+    PathNode() = default;
+    PathNode(float setX, float setY);
     
     void markAsVisited();
     bool isVisited() const;
@@ -27,12 +27,12 @@ public:
     void updateNodesVisited();
     int getNodesVisited() const;
     int getTotalNodes() const;
-    std::vector<Node> getPath() const;
+    std::vector<PathNode> getPath() const;
     
 private:
     int totalNodes;
     int nodesVisited;
-    std::vector<Node> path;
+    std::vector<PathNode> path;
 };
 
 class PathHandler {

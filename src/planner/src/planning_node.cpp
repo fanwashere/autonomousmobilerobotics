@@ -12,7 +12,7 @@
 namespace {
     const std::string NODE_NAME = "planner";
     const double RATE = 1.0;
-    const int NUM_NODES = 2000;
+    const int NUM_NODES = 200;
 
     using MapCallback = boost::function<void(const nav_msgs::OccupancyGrid::ConstPtr&)>;
     using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
@@ -44,6 +44,9 @@ int main(int argc, char **argv) {
     // For visualization
     ros::Publisher nodePublisher = n.advertise<visualization_msgs::Marker>("nodes", 500);
     Visualizer visualizer(nodePublisher);
+
+    // For control
+    ros::Publisher controlPub = n.advertise<nav_msgs::Path>("/path", 100);
 
     // Wait for map to become available.
     while(ros::ok() && !mapHandler.hasData()) {
@@ -81,10 +84,23 @@ int main(int argc, char **argv) {
     std::vector<Coordinate> path = graph.findShortestPath(start, end);
     visualizer.drawPath(path);
 
+    // Converting Path<Coordinate> Path<nav_msgs::Path>
+    nav_msgs::Path navPath;
+
+    for (int i = 0; i < path.size(); ++i) {
+        geometry_msgs::Point p;
+        p.x = (float) (path[i].getX())*grid->getResolution();
+        p.y = (float) (path[i].getY())*grid->getResolution();
+        
+        geometry_msgs::PoseStamped a;
+        a.pose.position = p;
+        navPath.poses.push_back(a);
+    }
+
     ros::Rate rate(RATE);
 
     while(ros::ok()) {
-        controlPub.publish(path);
+        controlPub.publish(navPath);
         
         ros::spinOnce();
         rate.sleep();
