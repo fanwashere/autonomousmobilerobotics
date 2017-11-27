@@ -27,11 +27,12 @@ public:
     void updateNodesVisited();
     int getNodesVisited() const;
     int getTotalNodes() const;
-
-    std::vector<Node> path;
+    std::vector<Node> getPath() const;
+    
 private:
     int totalNodes;
     int nodesVisited;
+    std::vector<Node> path;
 };
 
 class PathHandler {

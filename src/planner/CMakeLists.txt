@@ -40,6 +40,5 @@ target_link_libraries(planning_node
   ${catkin_LIBRARIES}
 )
 target_link_libraries(control_node
-  ${catkin_LIBRARIES}
-  ${Eigen_LIBRARIES}
+  ${catkin_LIBRARIES} ${Eigen_LIBRARIES}
 )
