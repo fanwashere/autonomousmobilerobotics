@@ -9,8 +9,6 @@
 #include <visualization_msgs/Marker.h>
 #include <geometry_msgs/PoseStamped.h>
 
-// #define LIVE
-
 namespace {
     const std::string NODE_NAME = "planner";
     const double RATE = 1.0;
@@ -76,14 +74,25 @@ int main(int argc, char **argv) {
         visualizer.drawEdges(newNode);
     }
 
-    /* Test Dijkstra */
-    Coordinate start(15, 5);
-    visualizer.drawWaypoint(start);
+    /* Define waypoints */
+    std::vector<Coordinate> waypoints;
+    Coordinate waypoint1(1.2 * 1.0 / grid->getResolution(), 1.2 * 3.0 / grid->getResolution());
+    Coordinate waypoint2(1.2 * 3.0 / grid->getResolution(), 1.2 * 3.5 / grid->getResolution());
+    Coordinate waypoint3(1.2 * 4.5 / grid->getResolution(), 1.2 * 0.5 / grid->getResolution());
 
-    Coordinate end(10, 40);
-    visualizer.drawWaypoint(end);
+    waypoints.push_back(waypoint1);
+    waypoints.push_back(waypoint2);
+    waypoints.push_back(waypoint3);
 
-    std::vector<Coordinate> path = graph.findShortestPath(start, end);
+    visualizer.drawWaypoint(waypoint1);
+    visualizer.drawWaypoint(waypoint2);
+    visualizer.drawWaypoint(waypoint3);
+
+    Pose startingPose = poseHandler.getPose();
+    Coordinate startingCoord(1.2 * startingPose.x / grid->getResolution(), 1.2 * startingPose.y / grid->getResolution());
+    visualizer.drawWaypoint(startingCoord);
+
+    std::vector<Coordinate> path = graph.findShortestPath(startingCoord, waypoints);
     visualizer.drawPath(path);
 
     // Converting Path<Coordinate> Path<nav_msgs::Path>
@@ -91,9 +100,9 @@ int main(int argc, char **argv) {
 
     for (int i = 0; i < path.size(); ++i) {
         geometry_msgs::Point p;
-        p.x = (float) (path[i].getX())*grid->getResolution();
-        p.y = (float) (path[i].getY())*grid->getResolution();
-        
+        p.x = (float) (path[i].getX()) * grid->getResolution();
+        p.y = (float) (path[i].getY()) * grid->getResolution();
+
         geometry_msgs::PoseStamped a;
         a.pose.position = p;
         navPath.poses.push_back(a);
@@ -103,7 +112,7 @@ int main(int argc, char **argv) {
 
     while(ros::ok()) {
         controlPub.publish(navPath);
-        
+
         ros::spinOnce();
         rate.sleep();
     }

@@ -13,7 +13,6 @@
 #include "visualizer.h"
 
 using namespace Eigen;
-// #define LIVE
 
 namespace {
     const std::string NODE_NAME = "controller";

@@ -78,7 +78,7 @@ void Graph::addVertex(std::shared_ptr<Node> n1, std::shared_ptr<Node> n2, double
     n2->addEdge(n1, weight);
 }
 
-std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const Coordinate &end) {
+std::pair<std::vector<Coordinate>, double> Graph::findShortestPath(const Coordinate &start, const Coordinate &end) {
     std::vector<std::shared_ptr<Node>> prev(nodes.size() + 2); // +2 for start and end node, intentionally init as null
     std::vector<double> dist(nodes.size(), INF);
     std::vector<bool> inQueue(nodes.size() + 2, false);
@@ -109,7 +109,6 @@ std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const C
         pq.pop();
         inQueue[u->getId()] = false;
 
-	ROS_INFO("[Dijkstra] Traversed distance %f", distance);
         if (u->getId() == endNodePtr->getId())
         {
             ROS_INFO("[Dijkstra] End node found, exiting algorithm.");
@@ -145,19 +144,42 @@ std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const C
     std::reverse(path.begin(), path.end());
 
     ROS_INFO("[Dijkstra] Yielded path with %d nodes with distance %f.", (int)path.size(), dist[endNodePtr->getId()]);
-    return nodesToCoordinates(path);
+    return std::make_pair<std::vector<Coordinate>, double>(nodesToCoordinates(path), (double)dist[endNodePtr->getId()]);
 }
 
-std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const std::vector<Coordinate> &waypoints) {
-    std::vector<Coordinate> path;
-
-    for (int i = 0; i < waypoints.size(); i++)
-    {
-        const Coordinate subpathStart = i == 0 ? start : waypoints[i - 1];
-        const Coordinate subpathEnd = waypoints[i];
-        std::vector<Coordinate> subpath = findShortestPath(subpathStart, subpathEnd);
-        path.insert(path.end(), subpath.begin(), subpath.end());
+std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, std::vector<Coordinate> waypoints) {
+    if (waypoints.size() == 0) {
+        return std::vector<Coordinate>();
     }
+
+    std::vector<Coordinate> path;
+    double shortestDistance = 100000;
+    Coordinate closestWaypoint;
+    int shortestIndex;
+    ROS_INFO("Start coordinate [%d %d]", start.getX(), start.getY());
+    ROS_INFO("Number of waypoints: %d", (int)waypoints.size());
+    for (int i = 0; i < waypoints.size(); i++) {
+        ROS_INFO("To coordinate [%d %d]", waypoints[i].getX(), waypoints[i].getY());
+        std::pair<std::vector<Coordinate>, double> result = findShortestPath(start, waypoints[i]);
+        ROS_INFO("Distance: %f", result.second);
+        if (result.second < shortestDistance) {
+            ROS_INFO("Shorter distance found: %f", result.second);
+            path = result.first;
+            shortestDistance = result.second;
+            closestWaypoint = waypoints[i];
+            shortestIndex = i;
+        }
+    }
+    ROS_INFO("Found shortest (index %d).", shortestIndex);
+
+    waypoints.erase(waypoints.begin() + shortestIndex);
+    ROS_INFO("Removed shortest, %d waypoints remain.", (int)waypoints.size());
+    std::vector<Coordinate> nextPath = findShortestPath(closestWaypoint, waypoints);
+    ROS_INFO("Next shortest path found.");
+    if (nextPath.size() > 0) {
+        path.insert(path.end(), nextPath.begin() + 1, nextPath.end());
+    }
+    return path;
 }
 
 std::vector<Coordinate> Graph::nodesToCoordinates(std::vector<std::shared_ptr<Node>> nodeVector) const {

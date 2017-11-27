@@ -39,8 +39,8 @@ public:
     Graph(std::shared_ptr<Grid> g);
 
     void addNode(std::shared_ptr<Node> node);
-    std::vector<Coordinate> findShortestPath(const Coordinate &start, const Coordinate &end);
-    std::vector<Coordinate> findShortestPath(const Coordinate &start, const std::vector<Coordinate> &waypoints);
+    std::pair<std::vector<Coordinate>, double> findShortestPath(const Coordinate &start, const Coordinate &end);
+    std::vector<Coordinate> findShortestPath(const Coordinate &start, std::vector<Coordinate> waypoints);
 
 private:
     std::vector<std::shared_ptr<Node>> nodes;
