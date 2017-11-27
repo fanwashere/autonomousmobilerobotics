@@ -4,6 +4,7 @@
 #include "graph.h"
 #include "visualizer.h"
 #include <geometry_msgs/Point.h>
+#include <nav_msgs/Path.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <visualization_msgs/Marker.h>
 
