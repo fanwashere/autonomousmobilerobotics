@@ -2,6 +2,7 @@
 #include "pose.h"
 #include "map.h"
 #include "graph.h"
+#include "visualizer.h"
 #include <geometry_msgs/Point.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/OccupancyGrid.h>
@@ -11,7 +12,7 @@
 namespace {
     const std::string NODE_NAME = "planner";
     const double RATE = 1.0;
-    const int NUM_NODES = 200;
+    const int NUM_NODES = 2000;
 
     using MapCallback = boost::function<void(const nav_msgs::OccupancyGrid::ConstPtr&)>;
     using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
@@ -42,6 +43,7 @@ int main(int argc, char **argv) {
 
     // For visualization
     ros::Publisher nodePublisher = n.advertise<visualization_msgs::Marker>("nodes", 500);
+    Visualizer visualizer(nodePublisher);
 
     // Wait for map to become available.
     while(ros::ok() && !mapHandler.hasData()) {
@@ -53,6 +55,7 @@ int main(int argc, char **argv) {
     std::shared_ptr<Grid> grid = mapHandler.getGrid();
     grid->padObstacles(2);
     Graph graph(grid);
+    visualizer.setScalingFactor(grid->getResolution());
 
     for (int i = 0; i < NUM_NODES; i++) {
         Coordinate coord;
@@ -61,26 +64,22 @@ int main(int argc, char **argv) {
         } while(grid->checkOccupancy(coord));
 
         std::shared_ptr<Node> newNode = std::make_shared<Node>(coord);
-
         graph.addNode(newNode);
-
         std::vector<std::shared_ptr<Edge>> edges = newNode->getEdges();
-        // ROS_INFO("Added node to graph [x: %d, y: %d] with %d edges", coord.getX(), coord.getY(), (int)edges.size());
+        ROS_INFO("Added node to graph [x: %d, y: %d] with %d edges", coord.getX(), coord.getY(), (int)edges.size());
+        visualizer.drawNode(coord);
+        visualizer.drawEdges(newNode);
     }
 
-    
-    // controlPub.publish(path);
-    
-    // std::vector<geometry_msgs::Point> path;
-    //Coordinate start(0, 0);
-    //Coordinate end(10, 10);
-    //std::vector<Coordinate> path = graph.findShortestPath(start, end);
+    /* Test Dijkstra */
+    Coordinate start(15, 5);
+    visualizer.drawWaypoint(start);
 
-    /*
-    Pose pose = poseHandler.getPose();
-    Coordinate initCoord(pose.x, pose.y);
-    Node initNode(initCoord);
-    */
+    Coordinate end(10, 40);
+    visualizer.drawWaypoint(end);
+
+    std::vector<Coordinate> path = graph.findShortestPath(start, end);
+    visualizer.drawPath(path);
 
     ros::Rate rate(RATE);
 

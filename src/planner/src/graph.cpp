@@ -1,11 +1,16 @@
+#include <ros/ros.h>
 #include "map.h"
 #include "graph.h"
-
 #include <queue>
 
 namespace {
     const double NEIGHBOR_MAX_DISTANCE = 2.0;
     const uint32_t INF = 0x3f3f3f3f;
+    struct Compare {
+        constexpr bool operator()(std::pair<std::shared_ptr<Node>, double> const &n1,
+                                  std::pair<std::shared_ptr<Node>, double> const &n2) const noexcept
+        { return n1.second > n2.second; }
+    };
 }
 
 Node::Node(const Coordinate &c)
@@ -76,6 +81,7 @@ void Graph::addVertex(std::shared_ptr<Node> n1, std::shared_ptr<Node> n2, double
 std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const Coordinate &end) {
     std::vector<std::shared_ptr<Node>> prev(nodes.size() + 2); // +2 for start and end node, intentionally init as null
     std::vector<double> dist(nodes.size(), INF);
+    std::vector<bool> inQueue(nodes.size() + 2, false);
 
     // Add starting node
     addNode(std::make_shared<Node>(start));
@@ -88,10 +94,12 @@ std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const C
     std::shared_ptr<Node> endNodePtr = nodes.back();
 
     // Create priority queue
-    auto cmp = [](std::pair<std::shared_ptr<Node>, double> n1, std::pair<std::shared_ptr<Node>, double> n2) { return n1.second < n2.second; };
-    std::priority_queue<std::pair<std::shared_ptr<Node>, double>, std::vector<std::pair<std::shared_ptr<Node>, double>>, decltype(cmp)> pq(cmp);
+    auto cmp = [](std::pair<std::shared_ptr<Node>, double> n1, std::pair<std::shared_ptr<Node>, double> n2) { ROS_INFO("Cmp %f %f choosing %d", n1.second, n2.second, n1.second < n2.second ? 1 : 2); return n1.second < n2.second; };
+    std::priority_queue<std::pair<std::shared_ptr<Node>, double>, std::vector<std::pair<std::shared_ptr<Node>, double>>, Compare> pq;
 
+    // Insert starting node
     pq.push(std::pair<std::shared_ptr<Node>, double>(startNodePtr, 0.0));
+    inQueue[startNodePtr->getId()] = true;
 
     while (!pq.empty())
     {
@@ -99,15 +107,17 @@ std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const C
         std::shared_ptr<Node> u = uPair.first;
         double distance = uPair.second;
         pq.pop();
+        inQueue[u->getId()] = false;
 
+	ROS_INFO("[Dijkstra] Traversed distance %f", distance);
         if (u->getId() == endNodePtr->getId())
         {
+            ROS_INFO("[Dijkstra] End node found, exiting algorithm.");
             break;
         }
 
         std::vector<std::shared_ptr<Edge>> connections = u->getEdges();
-        int j;
-        for (j = 0; j < connections.size(); j++)
+        for (int j = 0; j < connections.size(); j++)
         {
             std::shared_ptr<Node> v = connections[j]->getDestination();
             double totalDistance = distance + connections[j]->getWeight();
@@ -115,7 +125,10 @@ std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const C
             {
                 dist[v->getId()] = totalDistance;
                 prev[v->getId()] = u;
-                pq.push(std::pair<std::shared_ptr<Node>, double>(v, totalDistance));
+                if (!inQueue[v->getId()]) {
+                    pq.push(std::pair<std::shared_ptr<Node>, double>(v, totalDistance));
+                    inQueue[v->getId()] = true;
+                }
             }
         }
     }
@@ -123,12 +136,15 @@ std::vector<Coordinate> Graph::findShortestPath(const Coordinate &start, const C
     // Construct path
     std::vector<std::shared_ptr<Node>> path;
     std::shared_ptr<Node> u = endNodePtr;
+    ROS_INFO("[Dijkstra] Starting path reconstruction with end node");
+    path.push_back(u);
     while (prev[u->getId()] != nullptr) {
         path.push_back(prev[u->getId()]);
         u = prev[u->getId()];
     }
     std::reverse(path.begin(), path.end());
 
+    ROS_INFO("[Dijkstra] Yielded path with %d nodes with distance %f.", (int)path.size(), dist[endNodePtr->getId()]);
     return nodesToCoordinates(path);
 }
 

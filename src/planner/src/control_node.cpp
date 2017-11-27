@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include "pose.h"
+<<<<<<< HEAD
 #include "path.h"
 #include "map.h"
 #include <tf/transform_datatypes.h>
@@ -7,6 +8,10 @@
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
+=======
+#include "map.h"
+#include "visualizer.h"
+>>>>>>> master
 #include <visualization_msgs/Marker.h>
 #include <math.h>
 #include <Eigen/Dense>
@@ -16,6 +21,7 @@ using namespace Eigen;
 namespace {
     const std::string NODE_NAME = "controller";
     const double RATE = 10.0;
+<<<<<<< HEAD
     
     const float pi = 3.141592;
     
@@ -25,8 +31,9 @@ namespace {
     const float velocity = 0.2;
     const float delta_max = 25*pi/180;
     const float robot_length = 0.25;
+=======
+>>>>>>> master
 
-    using PathCallback = boost::function<void(const nav_msgs::Path::ConstPtr&)>;
     using PoseSimCallback = boost::function<void(const gazebo_msgs::ModelStates::ConstPtr&)>;
     using PoseLiveCallback = boost::function<void(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&)>;
     
@@ -67,10 +74,9 @@ int main(int argc, char **argv) {
     ROS_INFO("Subscribed to /gazebo/model_states topic");
 #endif
 
-    PathHandler pathHandler;
-    PathCallback pathCallback = boost::bind(&PathHandler::callback, &pathHandler, _1);
-    auto pathSubscriber = n.subscribe("/path", 1, pathCallback);
-    ROS_INFO("Subscribed to /path topic");
+    ros::Publisher visualizationPublisher = n.advertise<visualization_msgs::Marker>("robot", 1);
+    Visualizer visualizer(visualizationPublisher);
+    visualizer.setScalingFactor(1.0); // Since pose is given in actual meters, don't need scaling.
 
     ros::Publisher velocity_publisher = n.advertise<geometry_msgs::Twist>("/cmd_vel_mux/input/teleop", 1);
     geometry_msgs::Twist vel;
@@ -146,7 +152,5 @@ int main(int argc, char **argv) {
         nodesVisited++;
     }
 
-    // while (ros::ok() && pathObject.getNodesVisited() != pathObject.totalNodes() ) {}
-    
     return 0;
 }

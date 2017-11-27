@@ -5,6 +5,9 @@ namespace {
     const int OBSTACLE_PROBABILITY = 100;
     const int OBSTACLE_PADDING_PROBABILITY = 80;
     constexpr int sign(int x) { return ((x > 0) ? 1 : ((x < 0) ? -1 : 0)); }
+
+    std::random_device rngDevice;
+    std::mt19937 rng(rngDevice());
 }
 
 Coordinate::Coordinate(int setX, int setY)
@@ -25,8 +28,8 @@ double Coordinate::distanceTo(const Coordinate &target) {
 }
 
 double Coordinate::distanceTo(const Coordinate &target, double resolution) {
-    int dx = abs(x - target.getX()) * resolution;
-    int dy = abs(y - target.getY()) * resolution;
+    double dx = abs(x - target.getX()) * resolution;
+    double dy = abs(y - target.getY()) * resolution;
 
     return sqrt(pow(dx, 2) + pow(dy, 2));
 }
@@ -43,8 +46,10 @@ float Grid::getResolution() const {
 }
 
 Coordinate Grid::getRandomCoordinate() const {
-    const int x = rand() % width;
-    const int y = rand() % height;
+    std::uniform_int_distribution<int> randomX(0, width - 1);
+    std::uniform_int_distribution<int> randomY(0, height - 1);
+    const int x = randomX(rng);
+    const int y = randomY(rng);
 
     return Coordinate(x, y);
 }
