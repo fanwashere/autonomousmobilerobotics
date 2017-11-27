@@ -68,36 +68,8 @@ int main(int argc, char **argv) {
         // ROS_INFO("Added node to graph [x: %d, y: %d] with %d edges", coord.getX(), coord.getY(), (int)edges.size());
     }
 
-    // WRITE A FUNCTION TO GO FROM COORDINATE PATH -> NAV MSGS PATH
-
-    // Control node publisher
-    ROS_INFO("ADVERTISING TO path");
-    ros::Publisher controlPub = n.advertise<nav_msgs::Path>("/path", 10);
-    nav_msgs::Path path;
-
-    // -- This section is for testing the robot -- /
-    geometry_msgs::Point p1, p2, p3;
-
-    p1.x = 0; p1.y = 0;
-    p2.x = 3; p2.y = 4;
-    p3.x = 8; p3.y = 2;
-
-    geometry_msgs::PoseStamped a1, a2, a3;
-
-    a1.pose.position = p1;
-    a2.pose.position = p2;
-    a3.pose.position = p3;
-
-    std::vector<geometry_msgs::PoseStamped> p;
-    p.push_back(a1);
-    p.push_back(a2);
-    p.push_back(a3);
-
-    path.poses = p;
-
+    
     // controlPub.publish(path);
-
-    // -- End of Test Section -- /
     
     // std::vector<geometry_msgs::Point> path;
     //Coordinate start(0, 0);

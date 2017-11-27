@@ -19,8 +19,8 @@ namespace {
     
     const float pi = 3.141592;
     
-    const float headingGain = 0.75;
-    const float crosstrackGain = 1;
+    const float headingGain = 0.25;
+    const float crosstrackGain = 0.25;
     
     const float velocity = 0.2;
     const float delta_max = 25*pi/180;
@@ -34,40 +34,20 @@ namespace {
         return std::fmod(angle+pi, 2*pi) - pi;
     }
 
-    bool distanceToLineSegment(Vector2f p1, Vector2f p2, Vector2f x, float &crosstrackError) {
-        bool outside = false;
-
-        if ( (p2-x).norm() < 0.5) {
-            outside = true;
-        }
-        
+    void distanceToLineSegment(Vector2f p1, Vector2f p2, Vector2f x, float &crosstrackError) {
         Vector2f line_segment = p2-p1;
         Vector2f p1_to_x = x-p1;
 
         Vector2f projection = p1 + (line_segment.dot(p1_to_x) / line_segment.squaredNorm()) * line_segment;
         Vector2f distance = x - projection;
-
-        ROS_INFO("THRESHOLD VALUE  -> %f", (line_segment.dot(p1_to_x) / line_segment.squaredNorm()));
-
-        // if ( (line_segment.dot(p1_to_x) / line_segment.squaredNorm())  > 1 ) {
-        //     outside = true;
-        // }
-
-        float pos_neg = 1.0;
         
-        Vector3f updated_line_segment(line_segment(0), line_segment(1), 0);
-        Vector3f updated_p1_to_x(p1_to_x(0), p1_to_x(1), 0);
-        
-        // ---- BE CAREFUL HERE ----- //
-        Vector3f cross_product = updated_line_segment.cross(updated_p1_to_x);
+        float value = ((p2(0) - p1(0))*(x(1) - p1(1))) - ((x(0) - p1(0))*(p2(1) - p1(1)));
 
-        if (cross_product(2) < 0) {
+        if (value > 0) {
             crosstrackError = -1.0*distance.norm();
         } else {
-            crosstrackError = 1.0*distance.norm();
+            crosstrackError = distance.norm();
         }
-        
-        return outside;
     }    
 }
 
@@ -128,25 +108,29 @@ int main(int argc, char **argv) {
         Vector2f end_point(path[i+1].x, path[i+1].y);
         float traj_angle = (float) atan2( end_point(1) - start_point(1), end_point(0) - start_point(0) );
         
-        bool next_point = false;
-
-        while (!next_point && ros::ok()) {
-            float crosstrackError;
-
+        while (ros::ok()) {
             Pose initPos = poseHandler.getPose(); // change initPose later in cleanup
             X(0) = initPos.x; X(1) = initPos.y; X(2) = initPos.yaw;
 
             ROS_INFO("[X, Y, YAW] : [%f, %f, %f]", X(0), X(1), X(2));
             Vector2f tempX(X(0), X(1));
 
-            bool next_point = distanceToLineSegment(start_point, end_point, tempX, crosstrackError);
-            ROS_INFO("CROSS TRACK ERROR : %f", crosstrackError);
+            if ( (end_point-tempX).norm() < 0.5) {
+                ROS_INFO("Distance bw Destination and CurrPoint : %f", (end_point-tempX).norm());
+                break;
+            }
 
+            float crosstrackError;
+            distanceToLineSegment(start_point, end_point, tempX, crosstrackError);
             float headingError = traj_angle - X(2);
-            ROS_INFO("HEADING ERROR : %f", headingError);
+            
+            ROS_INFO("CROSSTRACK ERROR : %f m", crosstrackError);
+            ROS_INFO("HEADING ERROR : %f rad", headingError);
             
             vel.linear.x = velocity;
-            vel.angular.z = -headingGain*headingError  - crosstrackGain*crosstrackError;
+            vel.angular.z = (headingGain*headingError + crosstrackGain*crosstrackError);
+
+            ROS_INFO("ANGULAR VEOCITY : %f", vel.angular.z);
             
             velocity_publisher.publish(vel);
             
