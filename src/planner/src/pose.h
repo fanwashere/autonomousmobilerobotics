@@ -4,15 +4,13 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 
 // Feel free to redefine what is needed in the Pose container
-struct Pose 
-{
+struct Pose {
     double x;
     double y;
     double yaw;
 };
 
-class PoseHandler
-{
+class PoseHandler {
 public:
     virtual ~PoseHandler() = default;
     Pose getPose() const;
@@ -22,16 +20,14 @@ protected:
     Pose pose;
 };
 
-class PoseHandlerLive : public PoseHandler
-{
+class PoseHandlerLive : public PoseHandler {
 public:
     PoseHandlerLive() = default;
-    void callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg);
+    void callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg);
 };
 
-class PoseHandlerSim : public PoseHandler
-{
+class PoseHandlerSim : public PoseHandler {
 public:
     PoseHandlerSim() = default;
-    void callback(const gazebo_msgs::ModelStates::ConstPtr& msg);
+    void callback(const gazebo_msgs::ModelStates::ConstPtr &msg);
 };

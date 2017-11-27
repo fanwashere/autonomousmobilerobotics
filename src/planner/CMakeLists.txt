@@ -15,9 +15,14 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
 )
 
+catkin_package()
+
 # Add other local cpp files here
 set(SOURCES
   src/pose.cpp
+  src/map.cpp
+  src/graph.cpp
+  src/visualizer.cpp
 )
 
 include_directories(
