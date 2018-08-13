@@ -13,7 +13,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   visualization_msgs
+  cmake_modules
 )
+
+find_package(Eigen REQUIRED)
 
 catkin_package()
 
@@ -23,10 +26,12 @@ set(SOURCES
   src/map.cpp
   src/graph.cpp
   src/visualizer.cpp
+  src/path.cpp
 )
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${Eigen_INCLUDE_DIRS}
 )
 
 add_executable(planning_node src/planning_node.cpp ${SOURCES})
@@ -36,5 +41,5 @@ target_link_libraries(planning_node
   ${catkin_LIBRARIES}
 )
 target_link_libraries(control_node
-  ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES} ${Eigen_LIBRARIES}
 )

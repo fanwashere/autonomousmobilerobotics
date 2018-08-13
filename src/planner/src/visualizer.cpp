@@ -2,6 +2,7 @@
 #include <visualization_msgs/Marker.h>
 #include "visualizer.h"
 #include "graph.h"
+#include "pose.h"
 
 namespace {
     const std::string VISUALIZATION_NAMESPACE = "graph";
@@ -111,15 +112,15 @@ void Visualizer::drawPath(const std::vector<Coordinate> &path) {
     publisher.publish(line);
 }
 
-void Visualizer::drawRobot(const Coordinate &coord, const double heading) {
+void Visualizer::drawRobot(const Pose &pose) {
     visualization_msgs::Marker marker;
     marker.header.frame_id = VISUALIZATION_FRAME_ID;
     marker.header.stamp = ros::Time::now();
     marker.ns = VISUALIZATION_NAMESPACE;
-    marker.id = 2;
+    marker.id = 0;
     marker.type = visualization_msgs::Marker::SPHERE;
-    marker.pose.position.x = coord.getX() * scalingFactor;
-    marker.pose.position.y = coord.getY() * scalingFactor;
+    marker.pose.position.x = pose.x;
+    marker.pose.position.y = pose.y;
     marker.pose.position.z = 0;
     marker.scale.x = marker.scale.y = marker.scale.z = 0.35;
     marker.color.g = 1.0f;
@@ -128,10 +129,10 @@ void Visualizer::drawRobot(const Coordinate &coord, const double heading) {
     publisher.publish(marker);
 
     geometry_msgs::Point current, destination;
-    current.x = coord.getX() * scalingFactor;
-    current.y = coord.getY() * scalingFactor;
-    destination.x = coord.getX() * scalingFactor + 0.5 * cos(heading);
-    destination.y = coord.getY() * scalingFactor + 0.5 * sin(heading);
+    current.x = pose.x;
+    current.y = pose.y;
+    destination.x = pose.x + 0.5 * cos(pose.yaw);
+    destination.y = pose.y * scalingFactor + 0.5 * sin(pose.yaw);
 
     visualization_msgs::Marker line;
     line.header.frame_id = VISUALIZATION_FRAME_ID;
