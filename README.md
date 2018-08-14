@@ -3,8 +3,11 @@ This repository is a collection of code used in labs of MTE 544 - Autonomous Mob
 
 # Team
 [Fan Zhang](https://github.com/fanwashere)
+
 [Sarim Zafar](https://github.com/sarimzafar)
+
 [Andy Su](https://github.com/andycodehut)
+
 [Bill Jiang](https://github.com/BillWenChaoJiang)
 
 ### [Demo Videos](https://drive.google.com/drive/folders/1PYJ0aHjkj7IZXcnW6H81Siq_tMnnlOYW)
